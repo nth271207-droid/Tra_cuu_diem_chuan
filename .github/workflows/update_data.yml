@@ -1,0 +1,44 @@
+name: Tự động Crawl và Cập nhật Điểm Chuẩn
+
+on:
+  schedule:
+    # Tự động chạy vào 00:00 Chủ Nhật hàng tuần (giờ UTC, tức 07:00 sáng Chủ Nhật giờ VN)
+    - cron: '0 0 * * 0'
+  workflow_dispatch: # Cho phép bấm nút "Run workflow" thủ công trên GitHub bất kỳ lúc nào
+
+permissions:
+  contents: write
+
+jobs:
+  crawl-and-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Tải mã nguồn (Checkout)
+        uses: actions/checkout@v4
+
+      - name: Cài đặt môi trường Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Cài đặt thư viện phụ thuộc
+        run: |
+          pip install -r requirements.txt
+
+      - name: Chạy Crawler thu thập điểm chuẩn mới từ Tuyensinh247
+        run: |
+          python main.py crawl --workers 5
+
+      - name: Xuất dữ liệu tĩnh cho trang web GitHub Pages
+        run: |
+          python main.py export-static
+
+      - name: Tự động lưu và cập nhật lên GitHub
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git commit -m "chore(data): tự động cập nhật điểm chuẩn [skip ci]" || echo "Không có dữ liệu mới để commit"
+          git push
