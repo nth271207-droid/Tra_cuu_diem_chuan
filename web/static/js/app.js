@@ -109,7 +109,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // DOM Elements - Tab 2: Others
     const selectOtherMethodType = document.getElementById("select-other-method-type");
     const inputOtherScore = document.getElementById("input-other-score");
+    const selectOtherUniversity = document.getElementById("select-other-university");
     const filterOtherKeyword = document.getElementById("filter-other-keyword");
+    const filterOtherYear = document.getElementById("filter-other-year");
     const btnClearOthers = document.getElementById("btn-clear-others");
     const othersSummaryText = document.getElementById("others-summary-text");
     const othersSchoolsContainer = document.getElementById("others-schools-container");
@@ -148,10 +150,16 @@ document.addEventListener("DOMContentLoaded", () => {
         if (tab === "thpt") {
             tabNavThpt.className = "flex-1 min-w-[220px] py-2.5 px-4 rounded-xl font-extrabold text-sm bg-blue-600 text-white shadow-sm flex items-center justify-center gap-2 transition-all";
             sectionThpt.classList.remove("hidden");
+            if (selectOtherUniversity && selectThptUniversity && selectOtherUniversity.value && !selectThptUniversity.value) {
+                selectThptUniversity.value = selectOtherUniversity.value;
+            }
             handleThptAnalysis();
         } else if (tab === "others") {
             tabNavOthers.className = "flex-1 min-w-[220px] py-2.5 px-4 rounded-xl font-extrabold text-sm bg-purple-600 text-white shadow-sm flex items-center justify-center gap-2 transition-all";
             sectionOthers.classList.remove("hidden");
+            if (selectThptUniversity && selectOtherUniversity && selectThptUniversity.value && !selectOtherUniversity.value) {
+                selectOtherUniversity.value = selectThptUniversity.value;
+            }
             handleOthersAnalysis();
         } else if (tab === "table") {
             tabNavTable.className = "sm:w-auto py-2.5 px-4 rounded-xl font-extrabold text-sm bg-emerald-600 text-white shadow-sm flex items-center justify-center gap-2 transition-all";
@@ -177,13 +185,20 @@ document.addEventListener("DOMContentLoaded", () => {
         handleThptAnalysis();
     });
 
-    [selectChanceLevel, filterThptYear, selectThptRegion, selectThptUniversity].forEach(el => {
+    [selectChanceLevel, filterThptYear, selectThptRegion].forEach(el => {
         if (el) {
             el.addEventListener("change", () => {
                 handleThptAnalysis();
             });
         }
     });
+
+    if (selectThptUniversity) {
+        selectThptUniversity.addEventListener("change", () => {
+            if (selectOtherUniversity) selectOtherUniversity.value = selectThptUniversity.value;
+            handleThptAnalysis();
+        });
+    }
 
     filterThptKeyword.addEventListener("input", () => {
         clearTimeout(debounceTimer);
@@ -238,6 +253,7 @@ document.addEventListener("DOMContentLoaded", () => {
         selectThptCombo.value = "A00";
         if (selectThptRegion) selectThptRegion.value = "0";
         if (selectThptUniversity) selectThptUniversity.value = "";
+        if (selectOtherUniversity) selectOtherUniversity.value = "";
         selectChanceLevel.value = "all";
         filterThptKeyword.value = "";
         filterThptYear.value = "";
@@ -257,27 +273,51 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 4. Tab 2: Các phương thức khác Event Listeners
     [selectOtherMethodType, inputOtherScore].forEach(el => {
-        el.addEventListener("input", () => {
+        if (el) {
+            el.addEventListener("input", () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    handleOthersAnalysis();
+                }, 250);
+            });
+        }
+    });
+
+    [selectOtherMethodType, filterOtherYear].forEach(el => {
+        if (el) {
+            el.addEventListener("change", () => {
+                handleOthersAnalysis();
+            });
+        }
+    });
+
+    if (selectOtherUniversity) {
+        selectOtherUniversity.addEventListener("change", () => {
+            if (selectThptUniversity) selectThptUniversity.value = selectOtherUniversity.value;
+            handleOthersAnalysis();
+        });
+    }
+
+    if (filterOtherKeyword) {
+        filterOtherKeyword.addEventListener("input", () => {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
                 handleOthersAnalysis();
             }, 250);
         });
-    });
+    }
 
-    filterOtherKeyword.addEventListener("input", () => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
+    if (btnClearOthers) {
+        btnClearOthers.addEventListener("click", () => {
+            if (selectOtherMethodType) selectOtherMethodType.value = "";
+            if (inputOtherScore) inputOtherScore.value = "";
+            if (selectOtherUniversity) selectOtherUniversity.value = "";
+            if (selectThptUniversity) selectThptUniversity.value = "";
+            if (filterOtherKeyword) filterOtherKeyword.value = "";
+            if (filterOtherYear) filterOtherYear.value = "";
             handleOthersAnalysis();
-        }, 250);
-    });
-
-    btnClearOthers.addEventListener("click", () => {
-        selectOtherMethodType.value = "";
-        inputOtherScore.value = "";
-        filterOtherKeyword.value = "";
-        handleOthersAnalysis();
-    });
+        });
+    }
 
     // 5. Tab 3: Table Mode Event Listeners
     if (btnViewGrouped && btnViewFlat) {
@@ -499,16 +539,24 @@ document.addEventListener("DOMContentLoaded", () => {
         await loadStaticDataIfNeeded();
         if (!staticScoresData) return;
 
-        const methodType = selectOtherMethodType.value.trim();
-        const scoreVal = inputOtherScore.value.trim();
+        const methodType = selectOtherMethodType ? selectOtherMethodType.value.trim() : "";
+        const scoreVal = inputOtherScore ? inputOtherScore.value.trim() : "";
         const userScore = scoreVal ? parseFloat(scoreVal) : null;
-        const kw = filterOtherKeyword.value.trim();
+        const selectedUniCode = selectOtherUniversity ? selectOtherUniversity.value.trim() : "";
+        const targetYear = filterOtherYear && filterOtherYear.value ? parseInt(filterOtherYear.value) : null;
+        const kw = filterOtherKeyword ? filterOtherKeyword.value.trim() : "";
         const kwNorm = removeVietnameseTones(kw);
 
         const schoolsMap = new Map();
         let totalCount = 0;
 
         staticScoresData.forEach(item => {
+            // Lọc theo trường đại học được chọn (nếu có)
+            if (selectedUniCode && item.university_code !== selectedUniCode) return;
+
+            // Lọc theo năm nếu chọn
+            if (targetYear && item.year !== targetYear) return;
+
             if (kwNorm) {
                 const mNameNorm = removeVietnameseTones(item.major_name || "");
                 const uNameNorm = removeVietnameseTones(item.university_name || "");
@@ -575,15 +623,16 @@ document.addEventListener("DOMContentLoaded", () => {
         if (schoolsList.length === 0) {
             othersSchoolsContainer.innerHTML = `
                 <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-xs">
-                    <p class="text-slate-700 font-bold text-base">Không tìm thấy trường nào có phương thức này</p>
-                    <p class="text-slate-400 text-xs mt-1">Thử chọn phương thức khác hoặc tìm từ khóa trường khác.</p>
+                    <p class="text-slate-700 font-bold text-base">Không tìm thấy trường nào phù hợp</p>
+                    <p class="text-slate-400 text-xs mt-1">Thử chọn trường khác, phương thức khác hoặc xóa từ khóa tìm kiếm.</p>
                 </div>
             `;
-            othersSummaryText.textContent = "Không có kết quả phù hợp.";
+            othersSummaryText.textContent = "Không có kết quả phù hợp với các tiêu chí đã chọn.";
             return;
         }
 
-        othersSummaryText.innerHTML = `Tìm thấy <span class="font-extrabold text-purple-700">${schoolsList.length}</span> trường đại học với <span class="font-extrabold text-blue-700">${totalCount}</span> ngành xét tuyển theo các phương thức riêng!`;
+        const uniInfo = selectedUniCode ? ` (trường ${selectedUniCode})` : "";
+        othersSummaryText.innerHTML = `Tìm thấy <span class="font-extrabold text-purple-700">${schoolsList.length}</span> trường đại học${uniInfo} với <span class="font-extrabold text-blue-700">${totalCount}</span> ngành xét tuyển theo các phương thức riêng!`;
 
         renderOtherSchoolCards(schoolsList, othersSchoolsContainer);
     }
@@ -684,6 +733,14 @@ document.addEventListener("DOMContentLoaded", () => {
                             ${rowsHtml}
                         </tbody>
                     </table>
+                    <div class="px-5 py-2.5 bg-purple-50/60 border-t border-purple-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <span class="text-purple-800 font-medium">Trường này còn có các phương thức tuyển sinh riêng:</span>
+                        <button type="button" class="btn-goto-other-methods px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer" data-code="${escapeHtml(school.code)}">
+                            <i class="fa-solid fa-brain"></i>
+                            <span>Xem điểm ĐGNL, ĐGTD, Học bạ... của trường ${escapeHtml(school.code)}</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
             `;
@@ -770,6 +827,14 @@ document.addEventListener("DOMContentLoaded", () => {
                             ${rowsHtml}
                         </tbody>
                     </table>
+                    <div class="px-5 py-2.5 bg-blue-50/60 border-t border-blue-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <span class="text-blue-800 font-medium">Xem kết quả xét tuyển theo điểm thi THPT:</span>
+                        <button type="button" class="btn-goto-thpt-methods px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer" data-code="${escapeHtml(school.code)}">
+                            <i class="fa-solid fa-award"></i>
+                            <span>Xem điểm thi tốt nghiệp THPT của trường ${escapeHtml(school.code)}</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
             `;
@@ -792,6 +857,26 @@ document.addEventListener("DOMContentLoaded", () => {
                     body.classList.add("hidden");
                     chevron.classList.remove("rotate-180");
                 }
+            });
+        });
+
+        container.querySelectorAll(".btn-goto-other-methods").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const code = btn.getAttribute("data-code");
+                if (selectOtherUniversity) selectOtherUniversity.value = code;
+                if (selectThptUniversity) selectThptUniversity.value = code;
+                setActiveTab("others");
+            });
+        });
+
+        container.querySelectorAll(".btn-goto-thpt-methods").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const code = btn.getAttribute("data-code");
+                if (selectThptUniversity) selectThptUniversity.value = code;
+                if (selectOtherUniversity) selectOtherUniversity.value = code;
+                setActiveTab("thpt");
             });
         });
     }
@@ -855,7 +940,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function populateUniversitiesDropdown() {
-        if (!selectThptUniversity) return;
         try {
             let list = [];
             const url = isStaticMode ? `${STATIC_BASE}/universities.json` : "/api/universities";
@@ -875,13 +959,13 @@ document.addEventListener("DOMContentLoaded", () => {
             // Sắp xếp danh sách trường theo bảng chữ cái tiếng Việt
             list.sort((a, b) => (a.name || "").localeCompare(b.name || "", "vi"));
 
-            selectThptUniversity.innerHTML = '<option value="">-- Tất cả các trường đại học (~300 trường) --</option>';
+            let optionsHtml = '<option value="">-- Tất cả các trường đại học (~300 trường) --</option>';
             list.forEach(u => {
-                const opt = document.createElement("option");
-                opt.value = u.code;
-                opt.textContent = `${u.code} - ${u.name}`;
-                selectThptUniversity.appendChild(opt);
+                optionsHtml += `<option value="${escapeHtml(u.code)}">${escapeHtml(u.code)} - ${escapeHtml(u.name)}</option>`;
             });
+
+            if (selectThptUniversity) selectThptUniversity.innerHTML = optionsHtml;
+            if (selectOtherUniversity) selectOtherUniversity.innerHTML = optionsHtml;
         } catch (err) {
             console.warn("Lỗi tải danh sách trường:", err);
             if (staticScoresData) {
@@ -893,13 +977,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
                 const fallbackList = Array.from(map.entries()).map(([code, name]) => ({ code, name }));
                 fallbackList.sort((a, b) => (a.name || "").localeCompare(b.name || "", "vi"));
-                selectThptUniversity.innerHTML = '<option value="">-- Tất cả các trường đại học (~300 trường) --</option>';
+                let optionsHtml = '<option value="">-- Tất cả các trường đại học (~300 trường) --</option>';
                 fallbackList.forEach(u => {
-                    const opt = document.createElement("option");
-                    opt.value = u.code;
-                    opt.textContent = `${u.code} - ${u.name}`;
-                    selectThptUniversity.appendChild(opt);
+                    optionsHtml += `<option value="${escapeHtml(u.code)}">${escapeHtml(u.code)} - ${escapeHtml(u.name)}</option>`;
                 });
+                if (selectThptUniversity) selectThptUniversity.innerHTML = optionsHtml;
+                if (selectOtherUniversity) selectOtherUniversity.innerHTML = optionsHtml;
             }
         }
     }
