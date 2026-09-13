@@ -1,6 +1,8 @@
 /**
  * Frontend logic for Đại Học Benchmark Lookup
- * - Chức năng chính: Tự động phân tích điểm thi THPT và hiển thị các trường có khả năng đậu
+ * - Tab 1: Xét tuyển điểm thi THPT theo tổ hợp môn (Khối A, B, C, D) + Máy tính điểm từng môn
+ * - Tab 2: Tách riêng các phương thức xét tuyển khác (ĐGNL, ĐGTD, Học bạ, CCQT...)
+ * - Tab 3: Bảng tra cứu toàn bộ
  * - Hỗ trợ Dual-Mode: Chạy offline/static 100% trên GitHub Pages hoặc qua FastAPI backend
  */
 
@@ -17,32 +19,100 @@ document.addEventListener("DOMContentLoaded", () => {
     let staticScoresData = null;
     const STATIC_BASE = "./data/static_data";
 
-    // DOM Elements - THPT Guidance Mode
+    // Môn học cấu thành từng tổ hợp
+    const COMBO_SUBJECTS = {
+        "A00": ["toan", "ly", "hoa"],
+        "A01": ["toan", "ly", "anh"],
+        "A02": ["toan", "ly", "sinh"],
+        "A03": ["toan", "ly", "su"],
+        "A04": ["toan", "ly", "dia"],
+        "A05": ["toan", "hoa", "su"],
+        "A06": ["toan", "hoa", "dia"],
+        "A07": ["toan", "su", "dia"],
+        "A08": ["toan", "su", "gdcd"],
+        "A09": ["toan", "dia", "gdcd"],
+        "A10": ["toan", "ly", "gdcd"],
+        "A11": ["toan", "hoa", "gdcd"],
+        "A16": ["toan", "van"],
+        "B00": ["toan", "hoa", "sinh"],
+        "B01": ["toan", "sinh", "su"],
+        "B02": ["toan", "sinh", "dia"],
+        "B03": ["toan", "sinh", "van"],
+        "B04": ["toan", "sinh", "gdcd"],
+        "B08": ["toan", "sinh", "anh"],
+        "C00": ["van", "su", "dia"],
+        "C01": ["van", "toan", "ly"],
+        "C02": ["van", "toan", "hoa"],
+        "C03": ["van", "toan", "su"],
+        "C04": ["van", "toan", "dia"],
+        "C14": ["van", "toan", "gdcd"],
+        "C19": ["van", "su", "gdcd"],
+        "C20": ["van", "dia", "gdcd"],
+        "D01": ["toan", "van", "anh"],
+        "D02": ["toan", "van"],
+        "D03": ["toan", "van"],
+        "D04": ["toan", "van"],
+        "D05": ["toan", "van"],
+        "D06": ["toan", "van"],
+        "D07": ["toan", "hoa", "anh"],
+        "D08": ["toan", "sinh", "anh"],
+        "D09": ["toan", "su", "anh"],
+        "D10": ["toan", "dia", "anh"],
+        "D14": ["van", "su", "anh"],
+        "D15": ["van", "dia", "anh"],
+        "D66": ["van", "gdcd", "anh"],
+        "D78": ["van", "anh"],
+        "D84": ["toan", "gdcd", "anh"]
+    };
+
+    // DOM Elements - Navigation Tabs
+    const tabNavThpt = document.getElementById("tab-nav-thpt");
+    const tabNavOthers = document.getElementById("tab-nav-others");
+    const tabNavTable = document.getElementById("tab-nav-table");
+
+    const sectionThpt = document.getElementById("section-thpt");
+    const sectionOthers = document.getElementById("section-others");
+    const sectionTable = document.getElementById("section-table");
+
+    // DOM Elements - Tab 1: THPT
+    const selectThptCombo = document.getElementById("select-thpt-combo");
     const inputThptScore = document.getElementById("input-thpt-score");
-    const selectSubjectGroup = document.getElementById("select-subject-group");
     const selectChanceLevel = document.getElementById("select-chance-level");
     const filterThptKeyword = document.getElementById("filter-thpt-keyword");
     const filterThptYear = document.getElementById("filter-thpt-year");
     const btnClearThpt = document.getElementById("btn-clear-thpt");
     const quickScoreButtons = document.querySelectorAll(".btn-quick-score");
 
-    const promptEnterScore = document.getElementById("prompt-enter-score");
     const thptSummaryBar = document.getElementById("thpt-summary-bar");
     const thptSummaryText = document.getElementById("thpt-summary-text");
-    const schoolsCardsList = document.getElementById("schools-cards-list");
-    const schoolsEmptyState = document.getElementById("schools-empty-state");
+    const promptThptEmpty = document.getElementById("prompt-thpt-empty");
+    const thptSchoolsContainer = document.getElementById("thpt-schools-container");
 
-    const btnExpandAll = document.getElementById("btn-expand-all");
-    const btnCollapseAll = document.getElementById("btn-collapse-all");
+    const btnThptExpandAll = document.getElementById("btn-thpt-expand-all");
+    const btnThptCollapseAll = document.getElementById("btn-thpt-collapse-all");
 
-    // Tab Elements
-    const tabBtnSchools = document.getElementById("tab-btn-schools");
-    const tabBtnTable = document.getElementById("tab-btn-table");
-    const viewSchoolsContainer = document.getElementById("view-schools-container");
-    const viewTableContainer = document.getElementById("view-table-container");
-    const schoolsActions = document.getElementById("schools-actions");
+    // Subject Inputs
+    const subInputs = {
+        toan: document.getElementById("m-toan"),
+        ly: document.getElementById("m-ly"),
+        hoa: document.getElementById("m-hoa"),
+        sinh: document.getElementById("m-sinh"),
+        van: document.getElementById("m-van"),
+        anh: document.getElementById("m-anh"),
+        su: document.getElementById("m-su"),
+        dia: document.getElementById("m-dia"),
+        gdcd: document.getElementById("m-gdcd")
+    };
 
-    // DOM Elements - Raw Table Mode
+    // DOM Elements - Tab 2: Others
+    const selectOtherMethodType = document.getElementById("select-other-method-type");
+    const inputOtherScore = document.getElementById("input-other-score");
+    const filterOtherKeyword = document.getElementById("filter-other-keyword");
+    const btnClearOthers = document.getElementById("btn-clear-others");
+    const othersSummaryText = document.getElementById("others-summary-text");
+    const othersSchoolsContainer = document.getElementById("others-schools-container");
+
+    // DOM Elements - Tab 3: Table Mode
     const sortBySelect = document.getElementById("sort-by");
     const btnExportCsv = document.getElementById("btn-export-csv");
     const btnViewGrouped = document.getElementById("btn-view-grouped");
@@ -63,7 +133,34 @@ document.addEventListener("DOMContentLoaded", () => {
     loadStats();
     loadStaticDataIfNeeded();
 
-    // 2. Event Listeners - THPT Score & Filters
+    // 2. Navigation Tab Switcher
+    function setActiveTab(tab) {
+        // Reset classes
+        [tabNavThpt, tabNavOthers, tabNavTable].forEach(b => {
+            b.className = "flex-1 min-w-[220px] py-2.5 px-4 rounded-xl font-bold text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center gap-2 transition-all";
+        });
+        [sectionThpt, sectionOthers, sectionTable].forEach(s => s.classList.add("hidden"));
+
+        if (tab === "thpt") {
+            tabNavThpt.className = "flex-1 min-w-[220px] py-2.5 px-4 rounded-xl font-extrabold text-sm bg-blue-600 text-white shadow-sm flex items-center justify-center gap-2 transition-all";
+            sectionThpt.classList.remove("hidden");
+            handleThptAnalysis();
+        } else if (tab === "others") {
+            tabNavOthers.className = "flex-1 min-w-[220px] py-2.5 px-4 rounded-xl font-extrabold text-sm bg-purple-600 text-white shadow-sm flex items-center justify-center gap-2 transition-all";
+            sectionOthers.classList.remove("hidden");
+            handleOthersAnalysis();
+        } else if (tab === "table") {
+            tabNavTable.className = "sm:w-auto py-2.5 px-4 rounded-xl font-extrabold text-sm bg-emerald-600 text-white shadow-sm flex items-center justify-center gap-2 transition-all";
+            sectionTable.classList.remove("hidden");
+            fetchScores();
+        }
+    }
+
+    tabNavThpt.addEventListener("click", () => setActiveTab("thpt"));
+    tabNavOthers.addEventListener("click", () => setActiveTab("others"));
+    tabNavTable.addEventListener("click", () => setActiveTab("table"));
+
+    // 3. Tab 1: THPT Event Listeners
     inputThptScore.addEventListener("input", () => {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
@@ -71,7 +168,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 200);
     });
 
-    [selectSubjectGroup, selectChanceLevel, filterThptYear].forEach(el => {
+    selectThptCombo.addEventListener("change", () => {
+        calculateScoreFromSubjects();
+        handleThptAnalysis();
+    });
+
+    [selectChanceLevel, filterThptYear].forEach(el => {
         el.addEventListener("change", () => {
             handleThptAnalysis();
         });
@@ -84,7 +186,39 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 250);
     });
 
-    // Nút chọn nhanh điểm mẫu
+    // Lắng nghe khi nhập điểm từng môn
+    Object.values(subInputs).forEach(input => {
+        if (!input) return;
+        input.addEventListener("input", () => {
+            calculateScoreFromSubjects();
+        });
+    });
+
+    function calculateScoreFromSubjects() {
+        const combo = selectThptCombo.value.trim();
+        if (!combo || !COMBO_SUBJECTS[combo]) return;
+
+        const neededSubjects = COMBO_SUBJECTS[combo];
+        let sum = 0;
+        let hasValue = false;
+
+        neededSubjects.forEach(sub => {
+            const inp = subInputs[sub];
+            if (inp && inp.value.trim() !== "") {
+                const val = parseFloat(inp.value);
+                if (!isNaN(val)) {
+                    sum += val;
+                    hasValue = true;
+                }
+            }
+        });
+
+        if (hasValue) {
+            inputThptScore.value = sum.toFixed(2);
+            handleThptAnalysis();
+        }
+    }
+
     quickScoreButtons.forEach(btn => {
         btn.addEventListener("click", () => {
             const score = btn.getAttribute("data-score");
@@ -95,43 +229,49 @@ document.addEventListener("DOMContentLoaded", () => {
 
     btnClearThpt.addEventListener("click", () => {
         inputThptScore.value = "";
-        selectSubjectGroup.value = "";
+        selectThptCombo.value = "A00";
         selectChanceLevel.value = "all";
         filterThptKeyword.value = "";
         filterThptYear.value = "";
+        Object.values(subInputs).forEach(inp => { if (inp) inp.value = ""; });
         handleThptAnalysis();
     });
 
-    // Mở rộng / Thu gọn tất cả trường
-    btnExpandAll.addEventListener("click", () => {
-        document.querySelectorAll(".school-majors-body").forEach(el => el.classList.remove("hidden"));
-        document.querySelectorAll(".school-chevron").forEach(el => el.classList.add("rotate-180"));
+    btnThptExpandAll.addEventListener("click", () => {
+        thptSchoolsContainer.querySelectorAll(".school-majors-body").forEach(el => el.classList.remove("hidden"));
+        thptSchoolsContainer.querySelectorAll(".school-chevron").forEach(el => el.classList.add("rotate-180"));
     });
 
-    btnCollapseAll.addEventListener("click", () => {
-        document.querySelectorAll(".school-majors-body").forEach(el => el.classList.add("hidden"));
-        document.querySelectorAll(".school-chevron").forEach(el => el.classList.remove("rotate-180"));
+    btnThptCollapseAll.addEventListener("click", () => {
+        thptSchoolsContainer.querySelectorAll(".school-majors-body").forEach(el => el.classList.add("hidden"));
+        thptSchoolsContainer.querySelectorAll(".school-chevron").forEach(el => el.classList.remove("rotate-180"));
     });
 
-    // Tab Switcher
-    tabBtnSchools.addEventListener("click", () => {
-        tabBtnSchools.className = "px-4 py-2 rounded-xl font-bold text-sm bg-blue-600 text-white shadow-xs flex items-center gap-2 transition-all";
-        tabBtnTable.className = "px-4 py-2 rounded-xl font-semibold text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2 transition-all";
-        viewSchoolsContainer.classList.remove("hidden");
-        viewTableContainer.classList.add("hidden");
-        schoolsActions.classList.remove("hidden");
+    // 4. Tab 2: Các phương thức khác Event Listeners
+    [selectOtherMethodType, inputOtherScore].forEach(el => {
+        el.addEventListener("input", () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                handleOthersAnalysis();
+            }, 250);
+        });
     });
 
-    tabBtnTable.addEventListener("click", () => {
-        tabBtnTable.className = "px-4 py-2 rounded-xl font-bold text-sm bg-blue-600 text-white shadow-xs flex items-center gap-2 transition-all";
-        tabBtnSchools.className = "px-4 py-2 rounded-xl font-semibold text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2 transition-all";
-        viewTableContainer.classList.remove("hidden");
-        viewSchoolsContainer.classList.add("hidden");
-        schoolsActions.classList.add("hidden");
-        fetchScores();
+    filterOtherKeyword.addEventListener("input", () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            handleOthersAnalysis();
+        }, 250);
     });
 
-    // Table Mode Events
+    btnClearOthers.addEventListener("click", () => {
+        selectOtherMethodType.value = "";
+        inputOtherScore.value = "";
+        filterOtherKeyword.value = "";
+        handleOthersAnalysis();
+    });
+
+    // 5. Tab 3: Table Mode Event Listeners
     if (btnViewGrouped && btnViewFlat) {
         btnViewGrouped.addEventListener("click", () => {
             if (viewMode === "grouped") return;
@@ -168,7 +308,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // =========================================================================
-    // 3. LOGIC CHÍNH: TỰ ĐỘNG PHÂN TÍCH ĐIỂM THPT & GOM NHÓM THEO TRƯỜNG
+    // XỬ LÝ TAB 1: PHÂN TÍCH ĐIỂM THI THPT THEO TỔ HỢP MÔN
     // =========================================================================
 
     async function handleThptAnalysis() {
@@ -176,37 +316,33 @@ document.addEventListener("DOMContentLoaded", () => {
         const userScore = parseFloat(val);
 
         if (isNaN(userScore) || userScore <= 0) {
-            promptEnterScore.classList.remove("hidden");
-            thptSummaryBar.classList.add("hidden");
-            schoolsCardsList.innerHTML = "";
-            schoolsEmptyState.classList.add("hidden");
+            promptThptEmpty.classList.remove("hidden");
+            thptSchoolsContainer.innerHTML = "";
+            thptSummaryText.textContent = "Vui lòng nhập điểm hoặc chọn mức điểm mẫu để xem danh sách trường.";
             return;
         }
 
-        promptEnterScore.classList.add("hidden");
-        thptSummaryBar.classList.remove("hidden");
-        thptSummaryText.textContent = `Đang phân tích cơ hội trúng tuyển cho mức điểm ${userScore.toFixed(2)}...`;
+        promptThptEmpty.classList.add("hidden");
+        thptSummaryText.textContent = `Đang phân tích cơ hội trúng tuyển điểm ${userScore.toFixed(2)}...`;
 
         await loadStaticDataIfNeeded();
         if (!staticScoresData) {
-            thptSummaryText.textContent = "Không thể tải dữ liệu điểm chuẩn.";
+            thptSummaryText.textContent = "Không thể tải dữ liệu điểm.";
             return;
         }
 
-        const selectedSubject = selectSubjectGroup.value.trim();
+        const selectedCombo = selectThptCombo.value.trim();
         const chanceLevel = selectChanceLevel.value;
         const targetYear = filterThptYear.value ? parseInt(filterThptYear.value) : null;
         const kw = filterThptKeyword.value.trim();
         const kwNorm = removeVietnameseTones(kw);
 
-        // Gom nhóm các ngành hợp lệ theo từng trường (Map: university_code -> school data)
         const schoolsMap = new Map();
         let totalEligibleMajors = 0;
 
         staticScoresData.forEach(item => {
             if (targetYear && item.year !== targetYear) return;
 
-            // Kiểm tra từ khóa bổ sung (tên ngành hoặc tên trường)
             if (kwNorm) {
                 const mNameNorm = removeVietnameseTones(item.major_name || "");
                 const uNameNorm = removeVietnameseTones(item.university_name || "");
@@ -221,55 +357,48 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (!matchKw) return;
             }
 
-            // Lọc các phương thức liên quan đến Điểm thi THPT (thang điểm 30)
+            // Lọc phương thức THPT (loại bỏ hẳn các phương thức thi riêng)
             (item.methods || []).forEach(m => {
                 const mName = m.method || "";
-                const isThptMethod = mName.includes("THPT") || 
-                                     mName.includes("100") || 
-                                     (m.cutoff_score !== null && m.cutoff_score <= 30.5 && m.cutoff_score >= 12.0 &&
-                                      !mName.includes("TSA") && !mName.includes("ĐGTD") && !mName.includes("HSA") && !mName.includes("V-ACT") && !mName.includes("quốc tế"));
+                const isThpt = mName.includes("THPT") || 
+                               mName.includes("100") || 
+                               (m.cutoff_score !== null && m.cutoff_score <= 30.5 && m.cutoff_score >= 12.0 &&
+                                !mName.includes("TSA") && !mName.includes("ĐGTD") && !mName.includes("HSA") && !mName.includes("V-ACT") && !mName.includes("quốc tế"));
 
-                if (!isThptMethod) return;
+                if (!isThpt) return;
 
-                // Lọc theo tổ hợp môn nếu được chọn
-                if (selectedSubject) {
-                    if (!m.subject_group || !m.subject_group.includes(selectedSubject)) return;
+                // Lọc theo tổ hợp môn được chọn (ví dụ: A00, D01...)
+                if (selectedCombo) {
+                    if (!m.subject_group || !m.subject_group.includes(selectedCombo)) return;
                 }
 
                 const cutoff = m.cutoff_score;
                 if (cutoff === null || cutoff === undefined || cutoff <= 0) return;
 
-                const diff = userScore - cutoff; // diff >= 0 nghĩa là điểm của bạn cao hơn hoặc bằng điểm chuẩn
+                const diff = userScore - cutoff;
 
-                // Lọc theo mức độ cơ hội
                 let isEligible = false;
-                let chanceType = ""; // 'safe' | 'good' | 'stretch'
+                let chanceType = "";
                 let chanceLabel = "";
 
                 if (diff >= 1.0) {
                     chanceType = "safe";
-                    chanceLabel = `🟢 Đỗ rất an toàn (+${diff.toFixed(2)}đ)`;
+                    chanceLabel = `🟢 Đỗ an toàn (+${diff.toFixed(2)}đ)`;
                 } else if (diff >= 0.0) {
                     chanceType = "good";
                     chanceLabel = `🔵 Cơ hội tốt (+${diff.toFixed(2)}đ)`;
                 } else if (diff >= -1.0) {
                     chanceType = "stretch";
-                    chanceLabel = `🟡 Thử thách / Sát nút (${diff.toFixed(2)}đ)`;
+                    chanceLabel = `🟡 Thử thách (${diff.toFixed(2)}đ)`;
                 }
 
-                if (chanceLevel === "all") {
-                    isEligible = diff >= -0.25; // Cho phép sát nút một chút
-                } else if (chanceLevel === "safe") {
-                    isEligible = diff >= 1.0;
-                } else if (chanceLevel === "good") {
-                    isEligible = diff >= 0.0;
-                } else if (chanceLevel === "stretch") {
-                    isEligible = diff >= -1.0 && diff < 0.0;
-                }
+                if (chanceLevel === "all") isEligible = diff >= -0.25;
+                else if (chanceLevel === "safe") isEligible = diff >= 1.0;
+                else if (chanceLevel === "good") isEligible = diff >= 0.0;
+                else if (chanceLevel === "stretch") isEligible = diff >= -1.0 && diff < 0.0;
 
                 if (!isEligible) return;
 
-                // Thêm vào danh sách của trường
                 const uniCode = item.university_code;
                 if (!schoolsMap.has(uniCode)) {
                     schoolsMap.set(uniCode, {
@@ -279,7 +408,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
                 }
 
-                // Tránh trùng lặp cùng ngành cùng năm
                 const existingMajors = schoolsMap.get(uniCode).majors;
                 const isDupe = existingMajors.some(em => em.major_name === item.major_name && em.year === item.year && em.subject_group === m.subject_group);
                 if (!isDupe) {
@@ -302,39 +430,134 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
 
-        // Chuyển sang mảng và sắp xếp các trường theo số lượng ngành có cơ hội nhiều nhất
         const schoolsList = Array.from(schoolsMap.values());
         schoolsList.sort((a, b) => b.majors.length - a.majors.length);
+        schoolsList.forEach(s => s.majors.sort((a, b) => b.cutoff_score - a.cutoff_score));
 
-        // Trong từng trường, sắp xếp ngành theo điểm chuẩn từ cao xuống thấp
-        schoolsList.forEach(school => {
-            school.majors.sort((a, b) => b.cutoff_score - a.cutoff_score);
-        });
-
-        // Cập nhật thống kê
         if (schoolsList.length === 0) {
-            schoolsEmptyState.classList.remove("hidden");
-            schoolsCardsList.innerHTML = "";
-            thptSummaryText.textContent = `Không tìm thấy ngành nào phù hợp với mức điểm ${userScore.toFixed(2)}. Thử mở rộng mức cơ hội hoặc chọn Tất cả khối.`;
+            thptSchoolsContainer.innerHTML = `
+                <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-xs">
+                    <p class="text-slate-700 font-bold text-base">Không tìm thấy trường nào phù hợp</p>
+                    <p class="text-slate-400 text-xs mt-1">Thử chọn tổ hợp môn khác hoặc nới rộng mức độ cơ hội.</p>
+                </div>
+            `;
+            const comboText = selectedCombo ? `tổ hợp ${selectedCombo}` : "tất cả tổ hợp";
+            thptSummaryText.textContent = `Chưa tìm thấy trường nào với mức điểm ${userScore.toFixed(2)} (${comboText}).`;
             return;
         }
 
-        schoolsEmptyState.classList.add("hidden");
-        thptSummaryText.innerHTML = `🎉 Tìm thấy <span class="font-extrabold text-blue-700 text-base">${schoolsList.length}</span> trường đại học với <span class="font-extrabold text-emerald-700 text-base">${totalEligibleMajors}</span> ngành bạn có cơ hội trúng tuyển ở mức điểm <span class="font-extrabold text-blue-800">${userScore.toFixed(2)}</span>!`;
+        const comboText = selectedCombo ? `tổ hợp ${selectedCombo}` : "tất cả tổ hợp";
+        thptSummaryText.innerHTML = `🎉 Tìm thấy <span class="font-extrabold text-blue-700">${schoolsList.length}</span> trường với <span class="font-extrabold text-emerald-700">${totalEligibleMajors}</span> ngành có cơ hội trúng tuyển (${comboText}, điểm: <b class="text-blue-800">${userScore.toFixed(2)}</b>)!`;
 
-        // Render các Card trường đại học
-        renderSchoolCards(schoolsList, userScore);
+        renderSchoolCards(schoolsList, userScore, thptSchoolsContainer);
+    }
+
+    // =========================================================================
+    // XỬ LÝ TAB 2: CÁC PHƯƠNG THỨC XÉT TUYỂN KHÁC (TÁCH RIÊNG 100%)
+    // =========================================================================
+
+    async function handleOthersAnalysis() {
+        await loadStaticDataIfNeeded();
+        if (!staticScoresData) return;
+
+        const methodType = selectOtherMethodType.value.trim();
+        const scoreVal = inputOtherScore.value.trim();
+        const userScore = scoreVal ? parseFloat(scoreVal) : null;
+        const kw = filterOtherKeyword.value.trim();
+        const kwNorm = removeVietnameseTones(kw);
+
+        const schoolsMap = new Map();
+        let totalCount = 0;
+
+        staticScoresData.forEach(item => {
+            if (kwNorm) {
+                const mNameNorm = removeVietnameseTones(item.major_name || "");
+                const uNameNorm = removeVietnameseTones(item.university_name || "");
+                const mCode = (item.major_code || "").toLowerCase();
+                const uCode = (item.university_code || "").toLowerCase();
+                const kwLower = kw.toLowerCase();
+
+                const matchKw = mNameNorm.includes(kwNorm) ||
+                                uNameNorm.includes(kwNorm) ||
+                                mCode.includes(kwLower) ||
+                                uCode.includes(kwLower);
+                if (!matchKw) return;
+            }
+
+            (item.methods || []).forEach(m => {
+                const mName = m.method || "";
+
+                // Bỏ qua phương thức THPT chuẩn
+                const isThpt = mName.includes("THPT") || mName.includes("100");
+                if (isThpt) return;
+
+                // Lọc theo loại phương thức riêng được chọn
+                if (methodType === "tsa" && !mName.includes("TSA") && !mName.includes("ĐGTD")) return;
+                if (methodType === "hsa" && !mName.includes("HSA")) return;
+                if (methodType === "vact" && !mName.includes("V-ACT") && !mName.includes("ĐGNL ĐHQG-HCM")) return;
+                if (methodType === "spt" && !mName.includes("SPT")) return;
+                if (methodType === "hocba" && !mName.includes("học bạ") && !mName.includes("Học bạ")) return;
+                if (methodType === "ccqt" && !mName.includes("quốc tế") && !mName.includes("CCQT") && !mName.includes("SAT") && !mName.includes("IELTS")) return;
+                if (methodType === "kethop" && !mName.includes("kết hợp") && !mName.includes("ƯTXT")) return;
+
+                const cutoff = m.cutoff_score;
+                if (userScore !== null && cutoff !== null && cutoff > 0) {
+                    if (cutoff > userScore + 0.5) return; // Nếu điểm chuẩn cao hơn điểm đạt được thì không hiện
+                }
+
+                const uniCode = item.university_code;
+                if (!schoolsMap.has(uniCode)) {
+                    schoolsMap.set(uniCode, {
+                        code: uniCode,
+                        name: item.university_name || uniCode,
+                        majors: []
+                    });
+                }
+
+                schoolsMap.get(uniCode).majors.push({
+                    major_name: item.major_name,
+                    major_code: item.major_code,
+                    year: item.year,
+                    method: m.method,
+                    subject_group: m.subject_group,
+                    cutoff_score: cutoff,
+                    cutoff_score_text: m.cutoff_score_text,
+                    user_score: userScore,
+                    quota: item.quota,
+                    notes: m.notes
+                });
+                totalCount++;
+            });
+        });
+
+        const schoolsList = Array.from(schoolsMap.values());
+        schoolsList.sort((a, b) => b.majors.length - a.majors.length);
+
+        if (schoolsList.length === 0) {
+            othersSchoolsContainer.innerHTML = `
+                <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-xs">
+                    <p class="text-slate-700 font-bold text-base">Không tìm thấy trường nào có phương thức này</p>
+                    <p class="text-slate-400 text-xs mt-1">Thử chọn phương thức khác hoặc tìm từ khóa trường khác.</p>
+                </div>
+            `;
+            othersSummaryText.textContent = "Không có kết quả phù hợp.";
+            return;
+        }
+
+        othersSummaryText.innerHTML = `Tìm thấy <span class="font-extrabold text-purple-700">${schoolsList.length}</span> trường đại học với <span class="font-extrabold text-blue-700">${totalCount}</span> ngành xét tuyển theo các phương thức riêng!`;
+
+        renderOtherSchoolCards(schoolsList, othersSchoolsContainer);
     }
 
     /**
-     * RENDER CÁC THẺ TRƯỜNG ĐẠI HỌC VÀ CÁC NGÀNH CÓ CƠ HỘI ĐỖ
+     * RENDER CARD CHO TAB 1 (THPT)
      */
-    function renderSchoolCards(schoolsList, userScore) {
+    function renderSchoolCards(schoolsList, userScore, container) {
         let html = "";
 
         schoolsList.forEach((school, index) => {
             const majorsCount = school.majors.length;
-            const isFirstFew = index < 8; // Tự động mở 8 trường đầu tiên
+            const isFirstFew = index < 6;
 
             let rowsHtml = "";
             school.majors.forEach(m => {
@@ -342,7 +565,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (m.chanceType === "safe") badgeClass = "chance-badge-safe";
                 else if (m.chanceType === "stretch") badgeClass = "chance-badge-stretch";
 
-                // Subject pills
                 let subjHtml = "-";
                 if (m.subject_group) {
                     const parts = m.subject_group.split(";").map(s => s.trim()).filter(Boolean);
@@ -379,10 +601,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
             html += `
             <div class="uni-card bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden transition-all">
-                <!-- Card Header -->
-                <div class="school-card-header px-5 py-4 flex items-center justify-between gap-3 cursor-pointer bg-slate-50/70 hover:bg-blue-50/50 border-b border-slate-100 select-none">
+                <div class="school-card-header px-5 py-3.5 flex items-center justify-between gap-3 cursor-pointer bg-slate-50/80 hover:bg-blue-50/50 border-b border-slate-100 select-none">
                     <div class="flex items-center space-x-3.5 flex-1 min-w-0">
-                        <span class="w-12 h-10 rounded-xl bg-gradient-to-tr from-blue-700 to-indigo-700 text-white font-black text-sm flex items-center justify-center tracking-tight shadow-xs">
+                        <span class="w-12 h-9 rounded-xl bg-gradient-to-tr from-blue-700 to-indigo-700 text-white font-black text-sm flex items-center justify-center tracking-tight shadow-xs">
                             ${escapeHtml(school.code)}
                         </span>
                         <div class="truncate">
@@ -397,13 +618,12 @@ document.addEventListener("DOMContentLoaded", () => {
                         <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                             🟢 ${majorsCount} ngành có thể đỗ
                         </span>
-                        <button class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-blue-600 flex items-center justify-center transition-transform">
+                        <button class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-blue-600 flex items-center justify-center transition-transform">
                             <i class="fa-solid fa-chevron-down school-chevron transition-transform ${isFirstFew ? 'rotate-180' : ''}"></i>
                         </button>
                     </div>
                 </div>
 
-                <!-- Card Body (Danh sách ngành) -->
                 <div class="school-majors-body ${isFirstFew ? '' : 'hidden'} overflow-x-auto">
                     <table class="w-full text-left text-xs border-collapse">
                         <thead class="bg-slate-100/50 text-slate-500 uppercase font-semibold text-[11px] border-b border-slate-100">
@@ -424,10 +644,98 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
         });
 
-        schoolsCardsList.innerHTML = html;
+        container.innerHTML = html;
+        bindCardToggleEvents(container);
+    }
 
-        // Bắt sự kiện bấm vào Header để mở rộng/thu gọn card
-        document.querySelectorAll(".school-card-header").forEach(header => {
+    /**
+     * RENDER CARD CHO TAB 2 (CÁC PHƯƠNG THỨC KHÁC)
+     */
+    function renderOtherSchoolCards(schoolsList, container) {
+        let html = "";
+
+        schoolsList.forEach((school, index) => {
+            const majorsCount = school.majors.length;
+            const isFirstFew = index < 6;
+
+            let rowsHtml = "";
+            school.majors.forEach(m => {
+                const scoreVal = m.cutoff_score !== null ? m.cutoff_score : (m.cutoff_score_text || "-");
+                let subjHtml = m.subject_group ? `<span class="subject-pill">${escapeHtml(m.subject_group)}</span>` : "-";
+
+                rowsHtml += `
+                <tr class="hover:bg-purple-50/40 transition-colors border-b border-slate-100 last:border-b-0 text-xs">
+                    <td class="py-2.5 px-4 font-semibold text-slate-800">
+                        <div class="text-sm font-bold text-slate-900">${escapeHtml(m.major_name)}</div>
+                        ${m.major_code ? `<span class="text-[11px] font-mono text-slate-400">Mã: ${escapeHtml(m.major_code)}</span>` : ""}
+                        ${m.notes ? `<span class="text-[10.5px] text-slate-400 italic block mt-0.5">${escapeHtml(m.notes)}</span>` : ""}
+                    </td>
+                    <td class="py-2.5 px-3">
+                        <span class="inline-block px-2.5 py-1 rounded-md text-xs font-semibold bg-purple-50 text-purple-800 border border-purple-200">
+                            ${escapeHtml(m.method)}
+                        </span>
+                    </td>
+                    <td class="py-2.5 px-3 text-center">${subjHtml}</td>
+                    <td class="py-2.5 px-4 text-right">
+                        <span class="inline-block font-black text-slate-900 text-sm bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200">
+                            ${scoreVal}
+                        </span>
+                        <span class="block text-[10px] text-slate-400 mt-0.5">Năm ${m.year}</span>
+                    </td>
+                </tr>
+                `;
+            });
+
+            html += `
+            <div class="uni-card bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden transition-all">
+                <div class="school-card-header px-5 py-3.5 flex items-center justify-between gap-3 cursor-pointer bg-slate-50/80 hover:bg-purple-50/50 border-b border-slate-100 select-none">
+                    <div class="flex items-center space-x-3.5 flex-1 min-w-0">
+                        <span class="w-12 h-9 rounded-xl bg-gradient-to-tr from-purple-700 to-indigo-700 text-white font-black text-sm flex items-center justify-center tracking-tight shadow-xs">
+                            ${escapeHtml(school.code)}
+                        </span>
+                        <div class="truncate">
+                            <h3 class="font-extrabold text-slate-900 text-base truncate leading-snug" title="${escapeHtml(school.name)}">
+                                ${escapeHtml(school.name)}
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Mã trường: <b class="text-purple-700 font-bold">${escapeHtml(school.code)}</b></p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-3">
+                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-300">
+                            ${majorsCount} ngành tuyển sinh
+                        </span>
+                        <button class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-purple-600 flex items-center justify-center transition-transform">
+                            <i class="fa-solid fa-chevron-down school-chevron transition-transform ${isFirstFew ? 'rotate-180' : ''}"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="school-majors-body ${isFirstFew ? '' : 'hidden'} overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead class="bg-slate-100/50 text-slate-500 uppercase font-semibold text-[11px] border-b border-slate-100">
+                            <tr>
+                                <th class="py-2 px-4">Tên Ngành Xét Tuyển</th>
+                                <th class="py-2 px-3">Phương Thức Xét Tuyển</th>
+                                <th class="py-2 px-3 text-center w-28">Tổ Hợp / Điều Kiện</th>
+                                <th class="py-2 px-4 text-right w-32">Điểm Chuẩn</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            `;
+        });
+
+        container.innerHTML = html;
+        bindCardToggleEvents(container);
+    }
+
+    function bindCardToggleEvents(container) {
+        container.querySelectorAll(".school-card-header").forEach(header => {
             header.addEventListener("click", () => {
                 const body = header.nextElementSibling;
                 const chevron = header.querySelector(".school-chevron");
@@ -444,7 +752,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // =========================================================================
-    // 4. CHẾ ĐỘ BẢNG TRA CỨU TOÀN BỘ (RAW TABLE VIEW)
+    // XỬ LÝ TAB 3: BẢNG TRA CỨU TOÀN BỘ (RAW TABLE VIEW)
     // =========================================================================
 
     function updateTableHeaders() {
@@ -509,7 +817,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         let items = [...staticScoresData];
 
-        // Sắp xếp
         items.sort((a, b) => {
             if (sort_by === "cutoff_score") {
                 const maxScoreA = Math.max(...(a.methods || []).map(m => m.cutoff_score || 0), 0);

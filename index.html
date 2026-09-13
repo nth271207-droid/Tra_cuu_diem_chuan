@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dự Đoán Cơ Hội Đậu Đại Học 2026 - Theo Điểm Thi THPT</title>
+    <title>Tra Cứu & Dự Đoán Điểm Chuẩn Đại Học 2026 - Theo Tổ Hợp Môn</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -33,9 +33,9 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent leading-none">
-                        Tư Vấn Điểm Thi THPT 2026
+                        Tư Vấn Tuyển Sinh Đại Học 2026
                     </h1>
-                    <p class="text-xs text-slate-500 mt-0.5">Dự đoán các trường có khả năng đỗ theo điểm thi &bull; CSDL SQLite</p>
+                    <p class="text-xs text-slate-500 mt-0.5">Dự đoán trường đỗ theo tổ hợp môn &bull; Tách riêng THPT & Các phương thức khác</p>
                 </div>
             </div>
 
@@ -54,177 +54,355 @@
     <!-- Main Container -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
 
-        <!-- HERO SECTION: INPUT ĐIỂM THI THPT & BỘ LỌC TỰ ĐỘNG -->
-        <section class="bg-gradient-to-br from-blue-700 via-indigo-700 to-blue-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
-            <div class="relative z-10 max-w-4xl space-y-4">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-xs font-semibold text-blue-100 border border-white/10">
-                    <i class="fa-solid fa-sparkles text-amber-300"></i> Tính Năng Tự Động Phân Tích Điểm
-                </div>
-                <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                    Nhập điểm thi THPT - Xem ngay các trường bạn có khả năng đỗ!
-                </h2>
-                <p class="text-xs sm:text-sm text-blue-100/90 leading-relaxed">
-                    Chỉ cần nhập tổng điểm 3 môn thi THPT Quốc gia (thang điểm 30), hệ thống sẽ tự động đối chiếu điểm chuẩn của gần 300 trường đại học và gom nhóm các ngành trúng tuyển theo từng trường cho bạn.
-                </p>
+        <!-- NAVIGATION TABS: TÁCH RIÊNG THPT VÀ CÁC PHƯƠNG THỨC KHÁC -->
+        <div class="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center gap-1.5">
+            <button id="tab-nav-thpt" class="flex-1 min-w-[240px] py-2.5 px-4 rounded-xl font-extrabold text-sm bg-blue-600 text-white shadow-sm flex items-center justify-center gap-2 transition-all">
+                <i class="fa-solid fa-award text-amber-300"></i>
+                <span>1. Xét Tuyển Điểm Thi THPT (Theo Tổ Hợp Môn)</span>
+            </button>
+            <button id="tab-nav-others" class="flex-1 min-w-[240px] py-2.5 px-4 rounded-xl font-bold text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center gap-2 transition-all">
+                <i class="fa-solid fa-brain text-purple-600"></i>
+                <span>2. Các Phương Thức Xét Tuyển Khác (ĐGNL, ĐGTD, Học Bạ...)</span>
+            </button>
+            <button id="tab-nav-table" class="sm:w-auto py-2.5 px-4 rounded-xl font-bold text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center gap-2 transition-all">
+                <i class="fa-solid fa-table-list text-emerald-600"></i>
+                <span>3. Bảng Tra Cứu Toàn Bộ</span>
+            </button>
+        </div>
 
-                <!-- Input Box -->
-                <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-2xl flex flex-col sm:flex-row gap-3 text-slate-800">
-                    <!-- Điểm thi THPT -->
-                    <div class="flex-1">
-                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 pl-1">
-                            🎯 Điểm Thi THPT (Thang 30)
-                        </label>
-                        <div class="relative">
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-blue-600 font-extrabold text-xl pointer-events-none">
-                                <i class="fa-solid fa-award"></i>
-                            </span>
-                            <input 
-                                type="number" 
-                                id="input-thpt-score" 
-                                min="10" 
-                                max="30" 
-                                step="0.05" 
-                                placeholder="Ví dụ: 24.5" 
-                                class="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-300 font-black text-blue-700 text-xl focus:outline-none focus:ring-3 focus:ring-blue-500/20 focus:border-blue-600 bg-slate-50/70 shadow-inner transition-all"
-                            >
+        <!-- ========================================================================= -->
+        <!-- PHẦN 1: XÉT TUYỂN THEO ĐIỂM THI THPT & TỔ HỢP MÔN (MẶC ĐỊNH) -->
+        <!-- ========================================================================= -->
+        <section id="section-thpt" class="space-y-6">
+            <!-- HERO BOX THPT -->
+            <div class="bg-gradient-to-br from-blue-700 via-indigo-700 to-blue-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+                <div class="relative z-10 max-w-4xl space-y-4">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-xs font-semibold text-blue-100 border border-white/10">
+                        <i class="fa-solid fa-sparkles text-amber-300"></i> Tra Cứu Theo Khối & Điểm Thi Tốt Nghiệp THPT
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                        Dự đoán các trường có khả năng đỗ theo tổ hợp môn thi THPT
+                    </h2>
+                    <p class="text-xs sm:text-sm text-blue-100/90 leading-relaxed">
+                        Chọn tổ hợp môn bạn xét tuyển (Khối A, B, C, D) và nhập điểm của bạn (thang 30) hoặc nhập điểm từng môn, hệ thống sẽ tự động tính và gom nhóm các ngành bạn có cơ hội trúng tuyển theo từng trường đại học!
+                    </p>
+
+                    <!-- Input Bar -->
+                    <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-2xl flex flex-col lg:flex-row gap-3 text-slate-800">
+                        <!-- Chọn Tổ hợp môn -->
+                        <div class="lg:w-80">
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 pl-1">
+                                📚 Tổ Hợp Môn Xét Tuyển
+                            </label>
+                            <select id="select-thpt-combo" class="w-full py-3 px-3 rounded-xl border border-slate-300 font-bold text-slate-800 text-sm focus:outline-none focus:border-blue-600 bg-slate-50/80 shadow-xs">
+                                <option value="">-- Tất cả các tổ hợp môn --</option>
+                                
+                                <optgroup label="Khối A: Tự Nhiên, Kỹ Thuật, Công Nghệ, Kinh Tế">
+                                    <option value="A00" selected>A00: Toán, Vật lý, Hóa học</option>
+                                    <option value="A01">A01: Toán, Vật lý, Tiếng Anh</option>
+                                    <option value="A02">A02: Toán, Vật lý, Sinh học</option>
+                                    <option value="A03">A03: Toán, Vật lý, Lịch sử</option>
+                                    <option value="A04">A04: Toán, Vật lý, Địa lý</option>
+                                    <option value="A05">A05: Toán, Hóa học, Lịch sử</option>
+                                    <option value="A06">A06: Toán, Hóa học, Địa lý</option>
+                                    <option value="A07">A07: Toán, Lịch sử, Địa lý</option>
+                                    <option value="A08">A08: Toán, Lịch sử, GDCD</option>
+                                    <option value="A09">A09: Toán, Địa lý, GDCD</option>
+                                    <option value="A10">A10: Toán, Vật lý, GDCD</option>
+                                    <option value="A11">A11: Toán, Hóa học, GDCD</option>
+                                    <option value="A16">A16: Toán, KHTN, Ngữ văn</option>
+                                </optgroup>
+
+                                <optgroup label="Khối B: Y Dược, Y Tế, Nông Lâm, Sinh Học, Môi Trường">
+                                    <option value="B00">B00: Toán, Hóa học, Sinh học</option>
+                                    <option value="B01">B01: Toán, Sinh học, Lịch sử</option>
+                                    <option value="B02">B02: Toán, Sinh học, Địa lý</option>
+                                    <option value="B03">B03: Toán, Sinh học, Ngữ văn</option>
+                                    <option value="B04">B04: Toán, Sinh học, GDCD</option>
+                                    <option value="B05">B05: Toán, Sinh học, KHXH</option>
+                                    <option value="B08">B08: Toán, Sinh học, Tiếng Anh</option>
+                                </optgroup>
+
+                                <optgroup label="Khối C: Xã Hội, Nhân Văn, Luật, Báo Chí, Sư Phạm">
+                                    <option value="C00">C00: Ngữ văn, Lịch sử, Địa lý</option>
+                                    <option value="C01">C01: Ngữ văn, Toán, Vật lý</option>
+                                    <option value="C02">C02: Ngữ văn, Toán, Hóa học</option>
+                                    <option value="C03">C03: Ngữ văn, Toán, Lịch sử</option>
+                                    <option value="C04">C04: Ngữ văn, Toán, Địa lý</option>
+                                    <option value="C14">C14: Ngữ văn, Toán, GDCD</option>
+                                    <option value="C19">C19: Ngữ văn, Lịch sử, GDCD</option>
+                                    <option value="C20">C20: Ngữ văn, Địa lý, GDCD</option>
+                                </optgroup>
+
+                                <optgroup label="Khối D: Ngoại Ngữ, Kinh Tế, Truyền Thông, Du Lịch">
+                                    <option value="D01">D01: Ngữ văn, Toán, Tiếng Anh</option>
+                                    <option value="D02">D02: Ngữ văn, Toán, Tiếng Nga</option>
+                                    <option value="D03">D03: Ngữ văn, Toán, Tiếng Pháp</option>
+                                    <option value="D04">D04: Ngữ văn, Toán, Tiếng Trung</option>
+                                    <option value="D05">D05: Ngữ văn, Toán, Tiếng Đức</option>
+                                    <option value="D06">D06: Ngữ văn, Toán, Tiếng Nhật</option>
+                                    <option value="D07">D07: Toán, Hóa học, Tiếng Anh</option>
+                                    <option value="D08">D08: Toán, Sinh học, Tiếng Anh</option>
+                                    <option value="D09">D09: Toán, Lịch sử, Tiếng Anh</option>
+                                    <option value="D10">D10: Toán, Địa lý, Tiếng Anh</option>
+                                    <option value="D14">D14: Ngữ văn, Lịch sử, Tiếng Anh</option>
+                                    <option value="D15">D15: Ngữ văn, Địa lý, Tiếng Anh</option>
+                                    <option value="D66">D66: Ngữ văn, GDCD, Tiếng Anh</option>
+                                    <option value="D78">D78: Ngữ văn, KHXH, Tiếng Anh</option>
+                                    <option value="D84">D84: Toán, GDCD, Tiếng Anh</option>
+                                    <option value="D90">D90: Toán, KHTN, Tiếng Anh</option>
+                                    <option value="D96">D96: Toán, KHXH, Tiếng Anh</option>
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <!-- Điểm thi THPT của tổ hợp -->
+                        <div class="flex-1">
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 pl-1">
+                                🎯 Tổng Điểm Tổ Hợp (Thang 30)
+                            </label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-blue-600 font-extrabold text-xl pointer-events-none">
+                                    <i class="fa-solid fa-award"></i>
+                                </span>
+                                <input 
+                                    type="number" 
+                                    id="input-thpt-score" 
+                                    min="10" 
+                                    max="30" 
+                                    step="0.05" 
+                                    placeholder="Ví dụ: 25.5" 
+                                    class="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-300 font-black text-blue-700 text-xl focus:outline-none focus:ring-3 focus:ring-blue-500/20 focus:border-blue-600 bg-slate-50/80 shadow-inner transition-all"
+                                >
+                            </div>
+                        </div>
+
+                        <!-- Mức độ cơ hội -->
+                        <div class="lg:w-56">
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 pl-1">
+                                🛡️ Mức Độ Cơ Hội
+                            </label>
+                            <select id="select-chance-level" class="w-full py-3 px-3 rounded-xl border border-slate-300 font-bold text-slate-700 text-sm focus:outline-none focus:border-blue-600 bg-slate-50/80">
+                                <option value="all">Tất cả cơ hội (Điểm chuẩn ≤ Điểm bạn)</option>
+                                <option value="safe">🟢 Đỗ an toàn (Dư ≥ 1.0 điểm)</option>
+                                <option value="good">🔵 Cơ hội tốt (Dư ≥ 0.25 điểm)</option>
+                                <option value="stretch">🟡 Thử thách (Thiếu 0.1 - 1.0đ)</option>
+                            </select>
+                        </div>
+
+                        <!-- Nút Xóa / Đặt lại -->
+                        <div class="flex items-end">
+                            <button id="btn-clear-thpt" class="w-full sm:w-auto px-4 py-3 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 font-bold text-xs transition-colors flex items-center justify-center gap-1.5" title="Đặt lại">
+                                <i class="fa-solid fa-rotate-left"></i> Đặt lại
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Tổ hợp môn / Khối thi -->
-                    <div class="sm:w-56">
-                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 pl-1">
-                            📚 Tổ Hợp / Khối Thi
-                        </label>
-                        <select id="select-subject-group" class="w-full py-3.5 px-3 rounded-xl border border-slate-300 font-bold text-slate-700 text-sm focus:outline-none focus:border-blue-600 bg-slate-50/70">
-                            <option value="">Tất cả các khối</option>
-                            <option value="A00">Khối A00 (Toán, Lý, Hóa)</option>
-                            <option value="A01">Khối A01 (Toán, Lý, Anh)</option>
-                            <option value="B00">Khối B00 (Toán, Hóa, Sinh)</option>
-                            <option value="C00">Khối C00 (Văn, Sử, Địa)</option>
-                            <option value="D01">Khối D01 (Toán, Văn, Anh)</option>
-                            <option value="D07">Khối D07 (Toán, Hóa, Anh)</option>
-                            <option value="C01">Khối C01 (Toán, Văn, Lý)</option>
-                            <option value="D08">Khối D08 (Toán, Sinh, Anh)</option>
-                            <option value="A02">Khối A02 (Toán, Lý, Sinh)</option>
-                        </select>
+                    <!-- NHẬP ĐIỂM TỪNG MÔN THI THPT ĐỂ TỰ ĐỘNG TÍNH -->
+                    <div class="bg-white/10 backdrop-blur-md rounded-2xl p-3.5 border border-white/15">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-calculator"></i> Nhập điểm từng môn để tự động tính điểm tổ hợp:
+                            </span>
+                            <span class="text-[11px] text-blue-200 italic">Nhập điểm các môn bạn có, điểm tổ hợp sẽ tự động nhảy lên ô trên!</span>
+                        </div>
+                        <div class="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-2 text-slate-800 text-xs">
+                            <div>
+                                <label class="block text-white text-[11px] font-semibold mb-0.5 text-center">Toán</label>
+                                <input type="number" id="m-toan" step="0.05" min="0" max="10" placeholder="0.0" class="sub-input w-full py-1.5 px-2 rounded-lg bg-white font-extrabold text-center text-blue-700 shadow-xs focus:ring-2 focus:ring-amber-300 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-white text-[11px] font-semibold mb-0.5 text-center">Vật lý</label>
+                                <input type="number" id="m-ly" step="0.05" min="0" max="10" placeholder="0.0" class="sub-input w-full py-1.5 px-2 rounded-lg bg-white font-extrabold text-center text-blue-700 shadow-xs focus:ring-2 focus:ring-amber-300 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-white text-[11px] font-semibold mb-0.5 text-center">Hóa học</label>
+                                <input type="number" id="m-hoa" step="0.05" min="0" max="10" placeholder="0.0" class="sub-input w-full py-1.5 px-2 rounded-lg bg-white font-extrabold text-center text-blue-700 shadow-xs focus:ring-2 focus:ring-amber-300 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-white text-[11px] font-semibold mb-0.5 text-center">Sinh học</label>
+                                <input type="number" id="m-sinh" step="0.05" min="0" max="10" placeholder="0.0" class="sub-input w-full py-1.5 px-2 rounded-lg bg-white font-extrabold text-center text-blue-700 shadow-xs focus:ring-2 focus:ring-amber-300 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-white text-[11px] font-semibold mb-0.5 text-center">Ngữ văn</label>
+                                <input type="number" id="m-van" step="0.05" min="0" max="10" placeholder="0.0" class="sub-input w-full py-1.5 px-2 rounded-lg bg-white font-extrabold text-center text-blue-700 shadow-xs focus:ring-2 focus:ring-amber-300 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-white text-[11px] font-semibold mb-0.5 text-center">Tiếng Anh</label>
+                                <input type="number" id="m-anh" step="0.05" min="0" max="10" placeholder="0.0" class="sub-input w-full py-1.5 px-2 rounded-lg bg-white font-extrabold text-center text-blue-700 shadow-xs focus:ring-2 focus:ring-amber-300 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-white text-[11px] font-semibold mb-0.5 text-center">Lịch sử</label>
+                                <input type="number" id="m-su" step="0.05" min="0" max="10" placeholder="0.0" class="sub-input w-full py-1.5 px-2 rounded-lg bg-white font-extrabold text-center text-blue-700 shadow-xs focus:ring-2 focus:ring-amber-300 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-white text-[11px] font-semibold mb-0.5 text-center">Địa lý</label>
+                                <input type="number" id="m-dia" step="0.05" min="0" max="10" placeholder="0.0" class="sub-input w-full py-1.5 px-2 rounded-lg bg-white font-extrabold text-center text-blue-700 shadow-xs focus:ring-2 focus:ring-amber-300 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-white text-[11px] font-semibold mb-0.5 text-center">GDCD</label>
+                                <input type="number" id="m-gdcd" step="0.05" min="0" max="10" placeholder="0.0" class="sub-input w-full py-1.5 px-2 rounded-lg bg-white font-extrabold text-center text-blue-700 shadow-xs focus:ring-2 focus:ring-amber-300 focus:outline-none">
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Mức độ cơ hội -->
-                    <div class="sm:w-60">
-                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 pl-1">
-                            🛡️ Mức Độ Cơ Hội
-                        </label>
-                        <select id="select-chance-level" class="w-full py-3.5 px-3 rounded-xl border border-slate-300 font-bold text-slate-700 text-sm focus:outline-none focus:border-blue-600 bg-slate-50/70">
-                            <option value="all">Tất cả cơ hội (Điểm chuẩn ≤ Điểm bạn)</option>
-                            <option value="safe">🟢 Đỗ an toàn (Dư ≥ 1.0 điểm)</option>
-                            <option value="good">🔵 Cơ hội tốt (Dư ≥ 0.25 điểm)</option>
-                            <option value="stretch">🟡 Thử thách / Mạo hiểm (Thiếu 0.1 - 1.0đ)</option>
-                        </select>
-                    </div>
+                    <!-- Gợi ý bấm nhanh điểm mẫu & Bộ lọc phụ -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-1 text-xs text-blue-100">
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <span class="text-blue-200 font-medium">Bấm thử nhanh mức điểm:</span>
+                            <button class="btn-quick-score px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 font-bold text-white transition-all" data-score="21.5">21.5 đ</button>
+                            <button class="btn-quick-score px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 font-bold text-white transition-all" data-score="24.0">24.0 đ</button>
+                            <button class="btn-quick-score px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 font-bold text-white transition-all" data-score="25.5">25.5 đ</button>
+                            <button class="btn-quick-score px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 font-bold text-white transition-all" data-score="27.0">27.0 đ</button>
+                            <button class="btn-quick-score px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 font-bold text-white transition-all" data-score="28.5">28.5 đ</button>
+                        </div>
 
-                    <!-- Nút reset -->
-                    <div class="flex items-end">
-                        <button id="btn-clear-thpt" class="w-full sm:w-auto px-4 py-3.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 font-bold text-xs transition-colors flex items-center justify-center gap-1.5" title="Đặt lại bộ lọc">
-                            <i class="fa-solid fa-rotate-left"></i> Đặt lại
+                        <div class="flex items-center gap-2">
+                            <input 
+                                type="text" 
+                                id="filter-thpt-keyword" 
+                                placeholder="Lọc thêm ngành hoặc trường (VD: Bách Khoa, Kinh tế)..." 
+                                class="px-3 py-1.5 rounded-lg bg-white/15 border border-white/25 text-white placeholder-blue-200/60 text-xs focus:outline-none focus:bg-white/25 w-56"
+                            >
+                            <select id="filter-thpt-year" class="px-2.5 py-1.5 rounded-lg bg-white/15 border border-white/25 text-white text-xs focus:outline-none focus:bg-slate-800">
+                                <option value="" class="text-slate-800">Tất cả năm</option>
+                                <option value="2026" class="text-slate-800">Năm 2026</option>
+                                <option value="2025" class="text-slate-800">Năm 2025</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KẾT QUẢ THEO TỪNG TRƯỜNG CHO PHƯƠNG THỨC THPT -->
+            <div class="space-y-4">
+                <!-- Toolbar Action Bar -->
+                <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <div id="thpt-summary-bar" class="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                        <i class="fa-solid fa-school text-blue-600"></i>
+                        <span id="thpt-summary-text">Vui lòng nhập điểm hoặc chọn mức điểm mẫu để xem danh sách trường.</span>
+                    </div>
+                    <div class="flex items-center space-x-2 text-xs">
+                        <button id="btn-thpt-expand-all" class="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg font-medium transition-colors">
+                            <i class="fa-solid fa-angles-down text-blue-600 mr-1"></i> Mở rộng tất cả
+                        </button>
+                        <button id="btn-thpt-collapse-all" class="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg font-medium transition-colors">
+                            <i class="fa-solid fa-angles-up text-slate-500 mr-1"></i> Thu gọn
                         </button>
                     </div>
                 </div>
 
-                <!-- Gợi ý bấm nhanh điểm mẫu & Bộ lọc phụ -->
-                <div class="flex flex-wrap items-center justify-between gap-3 pt-1 text-xs text-blue-100">
-                    <div class="flex flex-wrap items-center gap-1.5">
-                        <span class="text-blue-200 font-medium">Bấm thử nhanh mức điểm:</span>
-                        <button class="btn-quick-score px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 font-bold text-white transition-all" data-score="21.5">21.5 đ</button>
-                        <button class="btn-quick-score px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 font-bold text-white transition-all" data-score="24.0">24.0 đ</button>
-                        <button class="btn-quick-score px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 font-bold text-white transition-all" data-score="25.5">25.5 đ</button>
-                        <button class="btn-quick-score px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 font-bold text-white transition-all" data-score="27.0">27.0 đ</button>
-                        <button class="btn-quick-score px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 font-bold text-white transition-all" data-score="28.5">28.5 đ</button>
+                <!-- Prompt State (Chưa nhập điểm) -->
+                <div id="prompt-thpt-empty" class="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-xs">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl shadow-inner">
+                        <i class="fa-solid fa-arrow-up-long animate-bounce"></i>
                     </div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-1">Vui lòng nhập điểm tổ hợp môn THPT của bạn</h3>
+                    <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mb-5 leading-relaxed">
+                        Hệ thống sẽ ngay lập tức đối chiếu và phân loại các trường đại học có ngành xét tuyển khối thi đó mà bạn có khả năng đỗ cao nhất!
+                    </p>
+                </div>
 
-                    <div class="flex items-center gap-2">
-                        <input 
-                            type="text" 
-                            id="filter-thpt-keyword" 
-                            placeholder="Lọc thêm ngành hoặc trường (VD: Kinh tế, Bách Khoa)..." 
-                            class="px-3 py-1.5 rounded-lg bg-white/15 border border-white/25 text-white placeholder-blue-200/60 text-xs focus:outline-none focus:bg-white/25 w-60"
-                        >
-                        <select id="filter-thpt-year" class="px-2.5 py-1.5 rounded-lg bg-white/15 border border-white/25 text-white text-xs focus:outline-none focus:bg-slate-800">
-                            <option value="" class="text-slate-800">Tất cả năm</option>
-                            <option value="2026" class="text-slate-800">Năm 2026 (Mới)</option>
-                            <option value="2025" class="text-slate-800">Năm 2025</option>
-                        </select>
-                    </div>
+                <!-- Danh sách thẻ trường đại học THPT -->
+                <div id="thpt-schools-container" class="space-y-4">
+                    <!-- Rendered by JS -->
                 </div>
             </div>
         </section>
 
-        <!-- VIEW TABS: CHUYỂN ĐỔI CHẾ ĐỘ XEM -->
-        <div class="flex items-center justify-between border-b border-slate-200 pb-2">
-            <div class="flex items-center space-x-2">
-                <button id="tab-btn-schools" class="px-4 py-2 rounded-xl font-bold text-sm bg-blue-600 text-white shadow-xs flex items-center gap-2 transition-all">
-                    <i class="fa-solid fa-building-columns"></i> Các Trường Có Khả Năng Đậu
-                </button>
-                <button id="tab-btn-table" class="px-4 py-2 rounded-xl font-semibold text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2 transition-all">
-                    <i class="fa-solid fa-table-list"></i> Bảng Tra Cứu Toàn Bộ
-                </button>
-            </div>
+        <!-- ========================================================================= -->
+        <!-- PHẦN 2: CÁC PHƯƠNG THỨC XÉT TUYỂN KHÁC (TÁCH RIÊNG 100%) -->
+        <!-- ========================================================================= -->
+        <section id="section-others" class="space-y-6 hidden">
+            <div class="bg-gradient-to-br from-purple-700 via-indigo-800 to-purple-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+                <div class="relative z-10 max-w-4xl space-y-4">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-xs font-semibold text-purple-200 border border-white/10">
+                        <i class="fa-solid fa-brain text-amber-300"></i> Các Phương Thức Tuyển Sinh Riêng & Tuyển Sinh Sớm
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                        Tra cứu Đánh Giá Năng Lực, Đánh Giá Tư Duy, Học Bạ & Chứng Chỉ
+                    </h2>
+                    <p class="text-xs sm:text-sm text-purple-100/90 leading-relaxed">
+                        Tách riêng điểm xét tuyển của các kỳ thi riêng: Đánh giá tư duy (TSA), Đánh giá năng lực (HSA, V-ACT, SPT), Điểm học bạ THPT, Chứng chỉ quốc tế (IELTS, SAT)...
+                    </p>
 
-            <div id="schools-actions" class="hidden sm:flex items-center space-x-2 text-xs">
-                <button id="btn-expand-all" class="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg font-medium transition-colors">
-                    <i class="fa-solid fa-angles-down text-blue-600 mr-1"></i> Mở rộng tất cả
-                </button>
-                <button id="btn-collapse-all" class="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg font-medium transition-colors">
-                    <i class="fa-solid fa-angles-up text-slate-500 mr-1"></i> Thu gọn
-                </button>
-            </div>
-        </div>
+                    <!-- Filter Bar cho phương thức khác -->
+                    <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-2xl flex flex-col sm:flex-row gap-3 text-slate-800">
+                        <!-- Chọn loại phương thức -->
+                        <div class="flex-1">
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 pl-1">
+                                🔍 Chọn Phương Thức Tuyển Sinh
+                            </label>
+                            <select id="select-other-method-type" class="w-full py-3 px-3 rounded-xl border border-slate-300 font-bold text-slate-800 text-sm focus:outline-none focus:border-purple-600 bg-slate-50/80">
+                                <option value="">-- Tất cả phương thức riêng --</option>
+                                <option value="tsa">🧠 Điểm Đánh giá tư duy (TSA - Bách Khoa, thang 100)</option>
+                                <option value="hsa">⚡ Điểm Đánh giá năng lực ĐHQG Hà Nội (HSA, thang 150)</option>
+                                <option value="vact">🌟 Điểm ĐGNL ĐHQG TP.HCM (V-ACT, thang 1200)</option>
+                                <option value="spt">🎓 Điểm ĐGNL Trường ĐH Sư Phạm (SPT)</option>
+                                <option value="hocba">📖 Điểm Xét Tuyển Học Bạ THPT</option>
+                                <option value="ccqt">🌍 Chứng Chỉ Quốc Tế (SAT, ACT, IELTS...)</option>
+                                <option value="kethop">🤝 Điểm Xét Tuyển Kết Hợp / Ưu Tiên Xét Tuyển</option>
+                            </select>
+                        </div>
 
-        <!-- VIEW 1: KẾT QUẢ GOM THEO TỪNG TRƯỜNG ĐẠI HỌC (MẶC ĐỊNH) -->
-        <section id="view-schools-container" class="space-y-4">
-            <!-- Summary Bar -->
-            <div id="thpt-summary-bar" class="bg-blue-50/80 border border-blue-200 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm text-blue-900 hidden">
-                <div class="flex items-center gap-2 font-semibold">
-                    <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
-                    <span id="thpt-summary-text">Đang phân tích dữ liệu...</span>
+                        <!-- Điểm của phương thức đó -->
+                        <div class="sm:w-56">
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 pl-1">
+                                🎯 Điểm Đạt Được Của Bạn
+                            </label>
+                            <input 
+                                type="number" 
+                                id="input-other-score" 
+                                step="0.5" 
+                                placeholder="Nhập điểm của bạn..." 
+                                class="w-full px-4 py-3 rounded-xl border border-slate-300 font-black text-purple-700 text-lg focus:outline-none focus:ring-3 focus:ring-purple-500/20 focus:border-purple-600 bg-slate-50/80"
+                            >
+                        </div>
+
+                        <!-- Lọc ngành / trường -->
+                        <div class="sm:w-64">
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 pl-1">
+                                🏢 Tìm Trường / Ngành
+                            </label>
+                            <input 
+                                type="text" 
+                                id="filter-other-keyword" 
+                                placeholder="Tên ngành, trường..." 
+                                class="w-full px-3.5 py-3 rounded-xl border border-slate-300 font-semibold text-slate-700 text-sm focus:outline-none focus:border-purple-600 bg-slate-50/80"
+                            >
+                        </div>
+
+                        <!-- Nút Xóa -->
+                        <div class="flex items-end">
+                            <button id="btn-clear-others" class="w-full sm:w-auto px-4 py-3 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-rotate-left"></i> Đặt lại
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="flex items-center gap-3 text-xs">
-                    <span class="chance-badge-safe">🟢 Đỗ an toàn (+1.0đ)</span>
-                    <span class="chance-badge-good">🔵 Cơ hội tốt (≥ điểm chuẩn)</span>
-                    <span class="chance-badge-stretch">🟡 Thử thách / Mạo hiểm</span>
-                </div>
             </div>
 
-            <!-- Chưa nhập điểm Prompt Box -->
-            <div id="prompt-enter-score" class="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-xs">
-                <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl shadow-inner">
-                    <i class="fa-solid fa-arrow-up-long animate-bounce"></i>
+            <!-- KẾT QUẢ THEO TỪNG TRƯỜNG CHO CÁC PHƯƠNG THỨC KHÁC -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <div id="others-summary-bar" class="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                        <i class="fa-solid fa-brain text-purple-600"></i>
+                        <span id="others-summary-text">Đang tải dữ liệu các phương thức xét tuyển riêng...</span>
+                    </div>
                 </div>
-                <h3 class="text-lg font-bold text-slate-800 mb-1">Vui lòng nhập điểm thi THPT của bạn</h3>
-                <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mb-5 leading-relaxed">
-                    Nhập điểm vào ô tìm kiếm màu trắng phía trên hoặc bấm vào các mức điểm mẫu (21.5đ, 24.0đ, 25.5đ...) để hệ thống tự động tìm và hiển thị danh sách các trường có khả năng đậu!
-                </p>
-            </div>
 
-            <!-- Danh sách các thẻ trường đại học -->
-            <div id="schools-cards-list" class="space-y-4">
-                <!-- University Cards rendered here by JS -->
-            </div>
-
-            <!-- Empty State for Schools -->
-            <div id="schools-empty-state" class="bg-white rounded-2xl border border-slate-200 py-16 text-center shadow-xs hidden">
-                <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-2xl">
-                    <i class="fa-solid fa-school-circle-xmark"></i>
+                <div id="others-schools-container" class="space-y-4">
+                    <!-- Rendered by JS -->
                 </div>
-                <p class="text-slate-700 font-bold text-base">Không tìm thấy trường nào phù hợp</p>
-                <p class="text-slate-400 text-xs mt-1">Thử chọn mức cơ hội rộng hơn hoặc hạ bớt tiêu chí khối thi.</p>
             </div>
         </section>
 
-        <!-- VIEW 2: BẢNG TRA CỨU TOÀN BỘ (DÀNH CHO AI MUỐN XEM DẠNG BẢNG LƯỚI) -->
-        <section id="view-table-container" class="space-y-4 hidden">
-            <!-- Table Toolbar -->
+        <!-- ========================================================================= -->
+        <!-- PHẦN 3: BẢNG TRA CỨU TOÀN BỘ (RAW TABLE VIEW) -->
+        <!-- ========================================================================= -->
+        <section id="section-table" class="space-y-4 hidden">
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
-                <span id="results-count" class="text-sm font-semibold text-slate-700">Đang tải...</span>
+                <span id="results-count" class="text-sm font-semibold text-slate-700">Đang tải dữ liệu...</span>
 
                 <div class="flex items-center space-x-3 text-xs">
                     <div class="inline-flex rounded-lg border border-slate-300 p-0.5 bg-slate-100/80">
@@ -250,7 +428,6 @@
                 </div>
             </div>
 
-            <!-- Table -->
             <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
                 <div class="overflow-x-auto min-h-[350px] relative">
                     <table class="w-full text-left text-sm border-collapse">
@@ -276,7 +453,6 @@
                     </div>
                 </div>
 
-                <!-- Pagination Bar -->
                 <div class="px-5 py-3.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-4 bg-slate-50/50 text-xs">
                     <div class="text-slate-500">
                         Trang <span id="current-page-display" class="font-bold text-slate-800">1</span> / <span id="total-pages-display" class="font-bold text-slate-800">1</span>
@@ -292,7 +468,7 @@
     <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
         <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
             <span>Dữ liệu điểm chuẩn Đại học 2026 &bull; Nguồn: <a href="https://diemthi.tuyensinh247.com/diem-chuan.html" target="_blank" class="text-blue-600 underline">Tuyensinh247.com</a></span>
-            <span>Lưu trữ: SQLite Database</span>
+            <span>Lưu trữ: SQLite Database &bull; Hỗ trợ chạy trên GitHub Pages</span>
         </div>
     </footer>
 
