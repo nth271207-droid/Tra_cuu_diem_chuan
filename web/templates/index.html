@@ -35,7 +35,6 @@
                     <h1 class="text-xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent leading-none">
                         Tư Vấn Tuyển Sinh Đại Học 2026
                     </h1>
-                    <p class="text-xs text-slate-500 mt-0.5">Dự đoán trường đỗ theo tổ hợp môn &bull; Tách riêng THPT & Các phương thức khác</p>
                 </div>
             </div>
 
@@ -88,111 +87,148 @@
                     </p>
 
                     <!-- Input Bar -->
-                    <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-2xl flex flex-col lg:flex-row gap-3 text-slate-800">
-                        <!-- Chọn Tổ hợp môn -->
-                        <div class="lg:w-80">
-                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 pl-1">
-                                📚 Tổ Hợp Môn Xét Tuyển
-                            </label>
-                            <select id="select-thpt-combo" class="w-full py-3 px-3 rounded-xl border border-slate-300 font-bold text-slate-800 text-sm focus:outline-none focus:border-blue-600 bg-slate-50/80 shadow-xs">
-                                <option value="">-- Tất cả các tổ hợp môn --</option>
-                                
-                                <optgroup label="Khối A: Tự Nhiên, Kỹ Thuật, Công Nghệ, Kinh Tế">
-                                    <option value="A00" selected>A00: Toán, Vật lý, Hóa học</option>
-                                    <option value="A01">A01: Toán, Vật lý, Tiếng Anh</option>
-                                    <option value="A02">A02: Toán, Vật lý, Sinh học</option>
-                                    <option value="A03">A03: Toán, Vật lý, Lịch sử</option>
-                                    <option value="A04">A04: Toán, Vật lý, Địa lý</option>
-                                    <option value="A05">A05: Toán, Hóa học, Lịch sử</option>
-                                    <option value="A06">A06: Toán, Hóa học, Địa lý</option>
-                                    <option value="A07">A07: Toán, Lịch sử, Địa lý</option>
-                                    <option value="A08">A08: Toán, Lịch sử, GDCD</option>
-                                    <option value="A09">A09: Toán, Địa lý, GDCD</option>
-                                    <option value="A10">A10: Toán, Vật lý, GDCD</option>
-                                    <option value="A11">A11: Toán, Hóa học, GDCD</option>
-                                    <option value="A16">A16: Toán, KHTN, Ngữ văn</option>
-                                </optgroup>
+                    <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-2xl flex flex-col gap-3 text-slate-800">
+                        <!-- Hàng 1: Tổ hợp môn, Tổng điểm 3 môn, Điểm vùng, Chọn trường -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                            <!-- 1. Chọn Tổ hợp môn -->
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 pl-1">
+                                    📚 1. Tổ Hợp Môn Xét Tuyển
+                                </label>
+                                <select id="select-thpt-combo" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 font-bold text-slate-800 text-sm focus:outline-none focus:border-blue-600 bg-slate-50/80 shadow-xs">
+                                    <option value="">-- Tất cả các tổ hợp môn --</option>
+                                    
+                                    <optgroup label="Khối A: Tự Nhiên, Kỹ Thuật, Công Nghệ, Kinh Tế">
+                                        <option value="A00" selected>A00: Toán, Vật lý, Hóa học</option>
+                                        <option value="A01">A01: Toán, Vật lý, Tiếng Anh</option>
+                                        <option value="A02">A02: Toán, Vật lý, Sinh học</option>
+                                        <option value="A03">A03: Toán, Vật lý, Lịch sử</option>
+                                        <option value="A04">A04: Toán, Vật lý, Địa lý</option>
+                                        <option value="A05">A05: Toán, Hóa học, Lịch sử</option>
+                                        <option value="A06">A06: Toán, Hóa học, Địa lý</option>
+                                        <option value="A07">A07: Toán, Lịch sử, Địa lý</option>
+                                        <option value="A08">A08: Toán, Lịch sử, GDCD</option>
+                                        <option value="A09">A09: Toán, Địa lý, GDCD</option>
+                                        <option value="A10">A10: Toán, Vật lý, GDCD</option>
+                                        <option value="A11">A11: Toán, Hóa học, GDCD</option>
+                                        <option value="A16">A16: Toán, KHTN, Ngữ văn</option>
+                                    </optgroup>
 
-                                <optgroup label="Khối B: Y Dược, Y Tế, Nông Lâm, Sinh Học, Môi Trường">
-                                    <option value="B00">B00: Toán, Hóa học, Sinh học</option>
-                                    <option value="B01">B01: Toán, Sinh học, Lịch sử</option>
-                                    <option value="B02">B02: Toán, Sinh học, Địa lý</option>
-                                    <option value="B03">B03: Toán, Sinh học, Ngữ văn</option>
-                                    <option value="B04">B04: Toán, Sinh học, GDCD</option>
-                                    <option value="B05">B05: Toán, Sinh học, KHXH</option>
-                                    <option value="B08">B08: Toán, Sinh học, Tiếng Anh</option>
-                                </optgroup>
+                                    <optgroup label="Khối B: Y Dược, Y Tế, Nông Lâm, Sinh Học, Môi Trường">
+                                        <option value="B00">B00: Toán, Hóa học, Sinh học</option>
+                                        <option value="B01">B01: Toán, Sinh học, Lịch sử</option>
+                                        <option value="B02">B02: Toán, Sinh học, Địa lý</option>
+                                        <option value="B03">B03: Toán, Sinh học, Ngữ văn</option>
+                                        <option value="B04">B04: Toán, Sinh học, GDCD</option>
+                                        <option value="B05">B05: Toán, Sinh học, KHXH</option>
+                                        <option value="B08">B08: Toán, Sinh học, Tiếng Anh</option>
+                                    </optgroup>
 
-                                <optgroup label="Khối C: Xã Hội, Nhân Văn, Luật, Báo Chí, Sư Phạm">
-                                    <option value="C00">C00: Ngữ văn, Lịch sử, Địa lý</option>
-                                    <option value="C01">C01: Ngữ văn, Toán, Vật lý</option>
-                                    <option value="C02">C02: Ngữ văn, Toán, Hóa học</option>
-                                    <option value="C03">C03: Ngữ văn, Toán, Lịch sử</option>
-                                    <option value="C04">C04: Ngữ văn, Toán, Địa lý</option>
-                                    <option value="C14">C14: Ngữ văn, Toán, GDCD</option>
-                                    <option value="C19">C19: Ngữ văn, Lịch sử, GDCD</option>
-                                    <option value="C20">C20: Ngữ văn, Địa lý, GDCD</option>
-                                </optgroup>
+                                    <optgroup label="Khối C: Xã Hội, Nhân Văn, Luật, Báo Chí, Sư Phạm">
+                                        <option value="C00">C00: Ngữ văn, Lịch sử, Địa lý</option>
+                                        <option value="C01">C01: Ngữ văn, Toán, Vật lý</option>
+                                        <option value="C02">C02: Ngữ văn, Toán, Hóa học</option>
+                                        <option value="C03">C03: Ngữ văn, Toán, Lịch sử</option>
+                                        <option value="C04">C04: Ngữ văn, Toán, Địa lý</option>
+                                        <option value="C14">C14: Ngữ văn, Toán, GDCD</option>
+                                        <option value="C19">C19: Ngữ văn, Lịch sử, GDCD</option>
+                                        <option value="C20">C20: Ngữ văn, Địa lý, GDCD</option>
+                                    </optgroup>
 
-                                <optgroup label="Khối D: Ngoại Ngữ, Kinh Tế, Truyền Thông, Du Lịch">
-                                    <option value="D01">D01: Ngữ văn, Toán, Tiếng Anh</option>
-                                    <option value="D02">D02: Ngữ văn, Toán, Tiếng Nga</option>
-                                    <option value="D03">D03: Ngữ văn, Toán, Tiếng Pháp</option>
-                                    <option value="D04">D04: Ngữ văn, Toán, Tiếng Trung</option>
-                                    <option value="D05">D05: Ngữ văn, Toán, Tiếng Đức</option>
-                                    <option value="D06">D06: Ngữ văn, Toán, Tiếng Nhật</option>
-                                    <option value="D07">D07: Toán, Hóa học, Tiếng Anh</option>
-                                    <option value="D08">D08: Toán, Sinh học, Tiếng Anh</option>
-                                    <option value="D09">D09: Toán, Lịch sử, Tiếng Anh</option>
-                                    <option value="D10">D10: Toán, Địa lý, Tiếng Anh</option>
-                                    <option value="D14">D14: Ngữ văn, Lịch sử, Tiếng Anh</option>
-                                    <option value="D15">D15: Ngữ văn, Địa lý, Tiếng Anh</option>
-                                    <option value="D66">D66: Ngữ văn, GDCD, Tiếng Anh</option>
-                                    <option value="D78">D78: Ngữ văn, KHXH, Tiếng Anh</option>
-                                    <option value="D84">D84: Toán, GDCD, Tiếng Anh</option>
-                                    <option value="D90">D90: Toán, KHTN, Tiếng Anh</option>
-                                    <option value="D96">D96: Toán, KHXH, Tiếng Anh</option>
-                                </optgroup>
-                            </select>
-                        </div>
+                                    <optgroup label="Khối D: Ngoại Ngữ, Kinh Tế, Truyền Thông, Du Lịch">
+                                        <option value="D01">D01: Ngữ văn, Toán, Tiếng Anh</option>
+                                        <option value="D02">D02: Ngữ văn, Toán, Tiếng Nga</option>
+                                        <option value="D03">D03: Ngữ văn, Toán, Tiếng Pháp</option>
+                                        <option value="D04">D04: Ngữ văn, Toán, Tiếng Trung</option>
+                                        <option value="D05">D05: Ngữ văn, Toán, Tiếng Đức</option>
+                                        <option value="D06">D06: Ngữ văn, Toán, Tiếng Nhật</option>
+                                        <option value="D07">D07: Toán, Hóa học, Tiếng Anh</option>
+                                        <option value="D08">D08: Toán, Sinh học, Tiếng Anh</option>
+                                        <option value="D09">D09: Toán, Lịch sử, Tiếng Anh</option>
+                                        <option value="D10">D10: Toán, Địa lý, Tiếng Anh</option>
+                                        <option value="D14">D14: Ngữ văn, Lịch sử, Tiếng Anh</option>
+                                        <option value="D15">D15: Ngữ văn, Địa lý, Tiếng Anh</option>
+                                        <option value="D66">D66: Ngữ văn, GDCD, Tiếng Anh</option>
+                                        <option value="D78">D78: Ngữ văn, KHXH, Tiếng Anh</option>
+                                        <option value="D84">D84: Toán, GDCD, Tiếng Anh</option>
+                                        <option value="D90">D90: Toán, KHTN, Tiếng Anh</option>
+                                        <option value="D96">D96: Toán, KHXH, Tiếng Anh</option>
+                                    </optgroup>
+                                </select>
+                            </div>
 
-                        <!-- Điểm thi THPT của tổ hợp -->
-                        <div class="flex-1">
-                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 pl-1">
-                                🎯 Tổng Điểm Tổ Hợp (Thang 30)
-                            </label>
-                            <div class="relative">
-                                <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-blue-600 font-extrabold text-xl pointer-events-none">
-                                    <i class="fa-solid fa-award"></i>
-                                </span>
-                                <input 
-                                    type="number" 
-                                    id="input-thpt-score" 
-                                    min="10" 
-                                    max="30" 
-                                    step="0.05" 
-                                    placeholder="Ví dụ: 25.5" 
-                                    class="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-300 font-black text-blue-700 text-xl focus:outline-none focus:ring-3 focus:ring-blue-500/20 focus:border-blue-600 bg-slate-50/80 shadow-inner transition-all"
-                                >
+                            <!-- 2. Điểm thi THPT 3 môn -->
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 pl-1">
+                                    🎯 2. Tổng Điểm 3 Môn (Thang 30)
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-blue-600 font-extrabold text-xl pointer-events-none">
+                                        <i class="fa-solid fa-award"></i>
+                                    </span>
+                                    <input 
+                                        type="number" 
+                                        id="input-thpt-score" 
+                                        min="10" 
+                                        max="30" 
+                                        step="0.05" 
+                                        placeholder="Ví dụ: 24.5" 
+                                        class="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-300 font-black text-blue-700 text-lg focus:outline-none focus:ring-3 focus:ring-blue-500/20 focus:border-blue-600 bg-slate-50/80 shadow-inner transition-all"
+                                    >
+                                </div>
+                            </div>
+
+                            <!-- 3. Điểm vùng / Khu vực ưu tiên -->
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 pl-1">
+                                    📍 3. Khu Vực Ưu Tiên (Điểm Vùng)
+                                </label>
+                                <select id="select-thpt-region" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 font-bold text-slate-800 text-sm focus:outline-none focus:border-blue-600 bg-slate-50/80 shadow-xs">
+                                    <option value="0">Khu vực 3 (KV3: +0.00đ)</option>
+                                    <option value="0.25">Khu vực 2 (KV2: +0.25đ)</option>
+                                    <option value="0.5">Khu vực 2 - Nông thôn (KV2-NT: +0.50đ)</option>
+                                    <option value="0.75">Khu vực 1 (KV1: +0.75đ)</option>
+                                </select>
+                            </div>
+
+                            <!-- 4. Tìm kiếm theo Trường Đại Học -->
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 pl-1">
+                                    🏢 4. Tìm Kiếm Theo Trường
+                                </label>
+                                <select id="select-thpt-university" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 font-bold text-slate-800 text-sm focus:outline-none focus:border-blue-600 bg-slate-50/80 shadow-xs">
+                                    <option value="">Tất cả các trường đại học (~300 trường)</option>
+                                </select>
                             </div>
                         </div>
 
-                        <!-- Mức độ cơ hội -->
-                        <div class="lg:w-56">
-                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1 pl-1">
-                                🛡️ Mức Độ Cơ Hội
-                            </label>
-                            <select id="select-chance-level" class="w-full py-3 px-3 rounded-xl border border-slate-300 font-bold text-slate-700 text-sm focus:outline-none focus:border-blue-600 bg-slate-50/80">
-                                <option value="all">Tất cả cơ hội (Điểm chuẩn ≤ Điểm bạn)</option>
-                                <option value="safe">🟢 Đỗ an toàn (Dư ≥ 1.0 điểm)</option>
-                                <option value="good">🔵 Cơ hội tốt (Dư ≥ 0.25 điểm)</option>
-                                <option value="stretch">🟡 Thử thách (Thiếu 0.1 - 1.0đ)</option>
-                            </select>
-                        </div>
+                        <!-- Hàng 2: Mức độ cơ hội, Tìm nhanh tên ngành, Năm, Đặt lại -->
+                        <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 text-xs">
+                            <div class="flex flex-wrap items-center gap-2.5 flex-1">
+                                <div class="w-56">
+                                    <select id="select-chance-level" class="w-full py-2 px-3 rounded-lg border border-slate-300 font-semibold text-slate-700 text-xs focus:outline-none focus:border-blue-600 bg-slate-50">
+                                        <option value="all">Tất cả cơ hội (Điểm chuẩn ≤ Điểm xét tuyển)</option>
+                                        <option value="safe">🟢 Đỗ rất an toàn (Dư ≥ 1.0 điểm)</option>
+                                        <option value="good">🔵 Cơ hội tốt (Dư ≥ 0.25 điểm)</option>
+                                        <option value="stretch">🟡 Thử thách (Thiếu 0.1 - 1.0đ)</option>
+                                    </select>
+                                </div>
 
-                        <!-- Nút Xóa / Đặt lại -->
-                        <div class="flex items-end">
-                            <button id="btn-clear-thpt" class="w-full sm:w-auto px-4 py-3 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 font-bold text-xs transition-colors flex items-center justify-center gap-1.5" title="Đặt lại">
+                                <input 
+                                    type="text" 
+                                    id="filter-thpt-keyword" 
+                                    placeholder="Tìm thêm theo tên ngành (VD: Công nghệ thông tin, Y khoa, Kinh tế)..." 
+                                    class="py-2 px-3 rounded-lg border border-slate-300 text-slate-800 placeholder-slate-400 text-xs focus:outline-none focus:border-blue-600 bg-slate-50 flex-1 min-w-[240px]"
+                                >
+
+                                <select id="filter-thpt-year" class="py-2 px-2.5 rounded-lg border border-slate-300 text-slate-700 text-xs focus:outline-none focus:border-blue-600 bg-slate-50">
+                                    <option value="">Tất cả năm</option>
+                                    <option value="2026">Năm 2026</option>
+                                    <option value="2025">Năm 2025</option>
+                                </select>
+                            </div>
+
+                            <button id="btn-clear-thpt" class="px-4 py-2 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-600 font-bold text-xs transition-colors flex items-center gap-1.5" title="Đặt lại">
                                 <i class="fa-solid fa-rotate-left"></i> Đặt lại
                             </button>
                         </div>

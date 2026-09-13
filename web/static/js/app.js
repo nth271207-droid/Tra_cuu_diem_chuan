@@ -77,6 +77,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // DOM Elements - Tab 1: THPT
     const selectThptCombo = document.getElementById("select-thpt-combo");
     const inputThptScore = document.getElementById("input-thpt-score");
+    const selectThptRegion = document.getElementById("select-thpt-region");
+    const selectThptUniversity = document.getElementById("select-thpt-university");
     const selectChanceLevel = document.getElementById("select-chance-level");
     const filterThptKeyword = document.getElementById("filter-thpt-keyword");
     const filterThptYear = document.getElementById("filter-thpt-year");
@@ -131,7 +133,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 1. Initial Data Fetching
     loadStats();
-    loadStaticDataIfNeeded();
+    loadStaticDataIfNeeded().then(() => {
+        populateUniversitiesDropdown();
+    });
 
     // 2. Navigation Tab Switcher
     function setActiveTab(tab) {
@@ -173,10 +177,12 @@ document.addEventListener("DOMContentLoaded", () => {
         handleThptAnalysis();
     });
 
-    [selectChanceLevel, filterThptYear].forEach(el => {
-        el.addEventListener("change", () => {
-            handleThptAnalysis();
-        });
+    [selectChanceLevel, filterThptYear, selectThptRegion, selectThptUniversity].forEach(el => {
+        if (el) {
+            el.addEventListener("change", () => {
+                handleThptAnalysis();
+            });
+        }
     });
 
     filterThptKeyword.addEventListener("input", () => {
@@ -230,6 +236,8 @@ document.addEventListener("DOMContentLoaded", () => {
     btnClearThpt.addEventListener("click", () => {
         inputThptScore.value = "";
         selectThptCombo.value = "A00";
+        if (selectThptRegion) selectThptRegion.value = "0";
+        if (selectThptUniversity) selectThptUniversity.value = "";
         selectChanceLevel.value = "all";
         filterThptKeyword.value = "";
         filterThptYear.value = "";
@@ -311,19 +319,35 @@ document.addEventListener("DOMContentLoaded", () => {
     // XỬ LÝ TAB 1: PHÂN TÍCH ĐIỂM THI THPT THEO TỔ HỢP MÔN
     // =========================================================================
 
+    function calculateEffectivePriority(rawScore, basePriority) {
+        if (!basePriority || basePriority <= 0) return 0;
+        if (rawScore < 22.5) {
+            return basePriority;
+        }
+        // Quy chế Bộ GD&ĐT từ 2023: Khi tổng điểm >= 22.5, điểm ưu tiên giảm theo công thức:
+        // Điểm ưu tiên = [(30 - Điểm đạt được) / 7.5] * Mức điểm ưu tiên
+        const effective = ((30 - rawScore) / 7.5) * basePriority;
+        return Math.max(0, Math.round(effective * 100) / 100);
+    }
+
     async function handleThptAnalysis() {
         const val = inputThptScore.value.trim();
-        const userScore = parseFloat(val);
+        const userRawScore = parseFloat(val);
 
-        if (isNaN(userScore) || userScore <= 0) {
+        if (isNaN(userRawScore) || userRawScore <= 0) {
             promptThptEmpty.classList.remove("hidden");
             thptSchoolsContainer.innerHTML = "";
             thptSummaryText.textContent = "Vui lòng nhập điểm hoặc chọn mức điểm mẫu để xem danh sách trường.";
             return;
         }
 
+        // Tính điểm ưu tiên khu vực theo Quy chế tuyển sinh ĐH của Bộ GD&ĐT
+        const basePriority = selectThptRegion ? (parseFloat(selectThptRegion.value) || 0) : 0;
+        const effectivePriority = calculateEffectivePriority(userRawScore, basePriority);
+        const admissionScore = Math.round((userRawScore + effectivePriority) * 100) / 100;
+
         promptThptEmpty.classList.add("hidden");
-        thptSummaryText.textContent = `Đang phân tích cơ hội trúng tuyển điểm ${userScore.toFixed(2)}...`;
+        thptSummaryText.textContent = `Đang phân tích cơ hội trúng tuyển điểm ${admissionScore.toFixed(2)}...`;
 
         await loadStaticDataIfNeeded();
         if (!staticScoresData) {
@@ -332,6 +356,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const selectedCombo = selectThptCombo.value.trim();
+        const selectedUniCode = selectThptUniversity ? selectThptUniversity.value.trim() : "";
         const chanceLevel = selectChanceLevel.value;
         const targetYear = filterThptYear.value ? parseInt(filterThptYear.value) : null;
         const kw = filterThptKeyword.value.trim();
@@ -341,8 +366,13 @@ document.addEventListener("DOMContentLoaded", () => {
         let totalEligibleMajors = 0;
 
         staticScoresData.forEach(item => {
+            // Lọc theo trường đại học được chọn (nếu có)
+            if (selectedUniCode && item.university_code !== selectedUniCode) return;
+
+            // Lọc theo năm nếu chọn
             if (targetYear && item.year !== targetYear) return;
 
+            // Lọc theo từ khóa ngành/trường
             if (kwNorm) {
                 const mNameNorm = removeVietnameseTones(item.major_name || "");
                 const uNameNorm = removeVietnameseTones(item.university_name || "");
@@ -375,7 +405,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 const cutoff = m.cutoff_score;
                 if (cutoff === null || cutoff === undefined || cutoff <= 0) return;
 
-                const diff = userScore - cutoff;
+                // So sánh Điểm xét tuyển (đã cộng điểm ưu tiên vùng) với Điểm chuẩn
+                const diff = Math.round((admissionScore - cutoff) * 100) / 100;
 
                 let isEligible = false;
                 let chanceType = "";
@@ -383,7 +414,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (diff >= 1.0) {
                     chanceType = "safe";
-                    chanceLabel = `🟢 Đỗ an toàn (+${diff.toFixed(2)}đ)`;
+                    chanceLabel = `🟢 Đỗ rất an toàn (+${diff.toFixed(2)}đ)`;
                 } else if (diff >= 0.0) {
                     chanceType = "good";
                     chanceLabel = `🔵 Cơ hội tốt (+${diff.toFixed(2)}đ)`;
@@ -418,7 +449,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         method: m.method,
                         subject_group: m.subject_group,
                         cutoff_score: cutoff,
-                        user_score: userScore,
+                        user_score: userRawScore,
+                        effective_priority: effectivePriority,
+                        admission_score: admissionScore,
                         diff: diff,
                         chanceType: chanceType,
                         chanceLabel: chanceLabel,
@@ -434,22 +467,28 @@ document.addEventListener("DOMContentLoaded", () => {
         schoolsList.sort((a, b) => b.majors.length - a.majors.length);
         schoolsList.forEach(s => s.majors.sort((a, b) => b.cutoff_score - a.cutoff_score));
 
+        const comboText = selectedCombo ? `tổ hợp ${selectedCombo}` : "tất cả tổ hợp";
+        let scoreBreakdown = `Điểm thi: <b class="text-blue-900">${userRawScore.toFixed(2)}</b>`;
+        if (effectivePriority > 0) {
+            scoreBreakdown += ` + Điểm vùng: <b class="text-emerald-700">+${effectivePriority.toFixed(2)}đ</b> ➔ Điểm xét tuyển: <b class="text-blue-900 text-sm sm:text-base">${admissionScore.toFixed(2)}</b>`;
+        } else {
+            scoreBreakdown += ` ➔ Điểm xét tuyển: <b class="text-blue-900 text-sm sm:text-base">${admissionScore.toFixed(2)}</b>`;
+        }
+
         if (schoolsList.length === 0) {
             thptSchoolsContainer.innerHTML = `
                 <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-xs">
                     <p class="text-slate-700 font-bold text-base">Không tìm thấy trường nào phù hợp</p>
-                    <p class="text-slate-400 text-xs mt-1">Thử chọn tổ hợp môn khác hoặc nới rộng mức độ cơ hội.</p>
+                    <p class="text-slate-400 text-xs mt-1">Thử chọn trường khác, tổ hợp môn khác hoặc nới rộng mức độ cơ hội.</p>
                 </div>
             `;
-            const comboText = selectedCombo ? `tổ hợp ${selectedCombo}` : "tất cả tổ hợp";
-            thptSummaryText.textContent = `Chưa tìm thấy trường nào với mức điểm ${userScore.toFixed(2)} (${comboText}).`;
+            thptSummaryText.innerHTML = `Chưa tìm thấy trường nào với mức ${scoreBreakdown} (${comboText}).`;
             return;
         }
 
-        const comboText = selectedCombo ? `tổ hợp ${selectedCombo}` : "tất cả tổ hợp";
-        thptSummaryText.innerHTML = `🎉 Tìm thấy <span class="font-extrabold text-blue-700">${schoolsList.length}</span> trường với <span class="font-extrabold text-emerald-700">${totalEligibleMajors}</span> ngành có cơ hội trúng tuyển (${comboText}, điểm: <b class="text-blue-800">${userScore.toFixed(2)}</b>)!`;
+        thptSummaryText.innerHTML = `🎉 Tìm thấy <span class="font-extrabold text-blue-700">${schoolsList.length}</span> trường với <span class="font-extrabold text-emerald-700">${totalEligibleMajors}</span> ngành có cơ hội trúng tuyển (${scoreBreakdown})!`;
 
-        renderSchoolCards(schoolsList, userScore, thptSchoolsContainer);
+        renderSchoolCards(schoolsList, userRawScore, thptSchoolsContainer, effectivePriority, admissionScore);
     }
 
     // =========================================================================
@@ -552,7 +591,7 @@ document.addEventListener("DOMContentLoaded", () => {
     /**
      * RENDER CARD CHO TAB 1 (THPT)
      */
-    function renderSchoolCards(schoolsList, userScore, container) {
+    function renderSchoolCards(schoolsList, userScore, container, effectivePriority = 0, admissionScore = 0) {
         let html = "";
 
         schoolsList.forEach((school, index) => {
@@ -575,6 +614,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 }
 
+                const displayAdmScore = (m.admission_score !== undefined ? m.admission_score : userScore).toFixed(2);
+                const priorityBadge = m.effective_priority > 0 
+                    ? `<span class="block text-[10px] text-emerald-600 font-semibold" title="Điểm thi: ${m.user_score.toFixed(2)} + Ưu tiên vùng: ${m.effective_priority.toFixed(2)}đ">(+${m.effective_priority.toFixed(2)}đ vùng)</span>`
+                    : `<span class="block text-[10px] text-slate-400 font-normal">Điểm thi gốc</span>`;
+
                 rowsHtml += `
                 <tr class="hover:bg-blue-50/40 transition-colors border-b border-slate-100 last:border-b-0 text-xs">
                     <td class="py-2.5 px-4 font-semibold text-slate-800">
@@ -590,7 +634,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         <span class="block text-[10px] text-slate-400 mt-0.5">${m.year}</span>
                     </td>
                     <td class="py-2.5 px-3 text-center">
-                        <span class="font-bold text-blue-700 text-sm">${userScore.toFixed(2)}</span>
+                        <span class="font-bold text-blue-700 text-sm">${displayAdmScore}</span>
+                        ${priorityBadge}
                     </td>
                     <td class="py-2.5 px-4 text-right">
                         <span class="${badgeClass}">${m.chanceLabel}</span>
@@ -631,7 +676,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <th class="py-2 px-4">Tên Ngành Xét Tuyển</th>
                                 <th class="py-2 px-3 text-center w-28">Khối Thi</th>
                                 <th class="py-2 px-3 text-center w-24">Điểm Chuẩn</th>
-                                <th class="py-2 px-3 text-center w-24">Điểm Của Bạn</th>
+                                <th class="py-2 px-3 text-center w-32">Điểm Xét Tuyển</th>
                                 <th class="py-2 px-4 text-right w-44">Đánh Giá Cơ Hội</th>
                             </tr>
                         </thead>
@@ -806,6 +851,56 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } catch (e) {
             console.error("Lỗi tải stats:", e);
+        }
+    }
+
+    async function populateUniversitiesDropdown() {
+        if (!selectThptUniversity) return;
+        try {
+            let list = [];
+            const url = isStaticMode ? `${STATIC_BASE}/universities.json` : "/api/universities";
+            const res = await fetch(url);
+            if (res.ok) {
+                list = await res.json();
+            } else if (staticScoresData) {
+                const map = new Map();
+                staticScoresData.forEach(item => {
+                    if (item.university_code && !map.has(item.university_code)) {
+                        map.set(item.university_code, item.university_name || item.university_code);
+                    }
+                });
+                list = Array.from(map.entries()).map(([code, name]) => ({ code, name }));
+            }
+
+            // Sắp xếp danh sách trường theo bảng chữ cái tiếng Việt
+            list.sort((a, b) => (a.name || "").localeCompare(b.name || "", "vi"));
+
+            selectThptUniversity.innerHTML = '<option value="">-- Tất cả các trường đại học (~300 trường) --</option>';
+            list.forEach(u => {
+                const opt = document.createElement("option");
+                opt.value = u.code;
+                opt.textContent = `${u.code} - ${u.name}`;
+                selectThptUniversity.appendChild(opt);
+            });
+        } catch (err) {
+            console.warn("Lỗi tải danh sách trường:", err);
+            if (staticScoresData) {
+                const map = new Map();
+                staticScoresData.forEach(item => {
+                    if (item.university_code && !map.has(item.university_code)) {
+                        map.set(item.university_code, item.university_name || item.university_code);
+                    }
+                });
+                const fallbackList = Array.from(map.entries()).map(([code, name]) => ({ code, name }));
+                fallbackList.sort((a, b) => (a.name || "").localeCompare(b.name || "", "vi"));
+                selectThptUniversity.innerHTML = '<option value="">-- Tất cả các trường đại học (~300 trường) --</option>';
+                fallbackList.forEach(u => {
+                    const opt = document.createElement("option");
+                    opt.value = u.code;
+                    opt.textContent = `${u.code} - ${u.name}`;
+                    selectThptUniversity.appendChild(opt);
+                });
+            }
         }
     }
 
