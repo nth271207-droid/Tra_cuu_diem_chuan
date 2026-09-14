@@ -24,6 +24,10 @@ def cmd_crawl(args):
     print("=" * 60)
 
     db = Database()
+    if getattr(args, "reset", False):
+        print("🗑️  Đang xoá toàn bộ CSDL cũ và tạo mới bảng...")
+        db.reset_db()
+        print("✅ Đã làm sạch CSDL thành công.")
     scraper = TuyensinhScraper(db=db)
 
     def on_progress(current, total, code):
@@ -214,6 +218,7 @@ def main():
     crawl_parser.add_argument("--limit", type=int, default=None, help="Giới hạn số trường cần crawl (để test)")
     crawl_parser.add_argument("--workers", type=int, default=5, help="Số luồng chạy song song")
     crawl_parser.add_argument("--delay", type=float, default=0.2, help="Độ trễ giữa các request (giây)")
+    crawl_parser.add_argument("--reset", action="store_true", help="Xoá sạch CSDL cũ trước khi crawl lại từ đầu")
     crawl_parser.set_defaults(func=cmd_crawl)
 
     # Command: search

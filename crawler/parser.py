@@ -6,6 +6,106 @@ class TuyensinhParser:
     BASE_URL = "https://diemthi.tuyensinh247.com"
 
     @staticmethod
+    def normalize_method_and_subject(
+        raw_method: str, 
+        raw_subject: str = "", 
+        notes: str = "", 
+        score: Optional[float] = None,
+        school_code: str = ""
+    ) -> Tuple[str, str]:
+        """
+        Chuẩn hóa tên phương thức và tổ hợp môn về các danh mục chuẩn.
+        Đặc biệt nhận diện và gán chính xác mã K00 (ĐGTD Bách Khoa) và Q00 (ĐGNL ĐHQGHN).
+        """
+        m_clean = raw_method.strip() if raw_method else ""
+        s_clean = raw_subject.strip() if raw_subject else ""
+        n_clean = notes.strip() if notes else ""
+
+        # Làm sạch ký tự lỗi hiển thị UTF-8 (mojibake) và khoảng trắng đặc biệt
+        m_clean = re.sub(r"[\ufffd\xa0]+", " ", m_clean).strip()
+        s_clean = re.sub(r"[\ufffd\xa0]+", " ", s_clean).strip()
+        n_clean = re.sub(r"[\ufffd\xa0]+", " ", n_clean).strip()
+
+        m_lower = m_clean.lower()
+        s_lower = s_clean.lower()
+        s_upper = s_clean.upper()
+
+        # 1. Đánh giá tư duy Bách Khoa (TSA) - Mã tổ hợp K00
+        if "k00" in s_lower or "k00" in m_lower or "tsa" in m_lower or "tư duy" in m_lower or "đgtd" in m_lower or "đhbkhn" in m_lower:
+            norm_method = "Đánh giá tư duy Bách Khoa (TSA)"
+            if not s_clean or s_clean in ["-", "–"]:
+                s_clean = "K00"
+            elif "K00" not in s_upper:
+                s_clean = f"K00; {s_clean}".strip("; ")
+
+        # 2. Đánh giá năng lực ĐHQG Hà Nội (HSA) - Mã tổ hợp Q00
+        elif "q00" in s_lower or "q00" in m_lower or "hsa" in m_lower or ("đgnl" in m_lower and ("hà nội" in m_lower or "đhqghn" in m_lower)):
+            norm_method = "Đánh giá năng lực ĐHQG Hà Nội (HSA)"
+            if not s_clean or s_clean in ["-", "–"]:
+                s_clean = "Q00"
+            elif "Q00" not in s_upper:
+                s_clean = f"Q00; {s_clean}".strip("; ")
+
+        # 3. Đánh giá năng lực ĐHQG TP.HCM (V-ACT)
+        elif "v-act" in m_lower or "vact" in m_lower or ("đgnl" in m_lower and ("hcm" in m_lower or "tp.hcm" in m_lower or "tp" in m_lower)):
+            norm_method = "Đánh giá năng lực ĐHQG TP.HCM (V-ACT)"
+
+        # 4. Đánh giá đầu vào Đại học V-SAT
+        elif "v-sat" in m_lower or "vsat" in m_lower or "đầu vào" in m_lower or "v_sat" in m_lower:
+            norm_method = "Đánh giá đầu vào V-SAT"
+
+        # 5. Đánh giá năng lực Sư phạm (SPT)
+        elif "spt" in m_lower or "sp2e" in m_lower or ("đgnl" in m_lower and ("sư phạm" in m_lower or "đhsp" in m_lower)):
+            norm_method = "Đánh giá năng lực Sư phạm (SPT)"
+
+        # 6. Đánh giá Bộ Công An / Quân đội (BCA/QDA)
+        elif "qda" in m_lower or "bca" in m_lower or "công an" in m_lower:
+            norm_method = "Đánh giá Bộ Công An (BCA/QDA)"
+
+        # 7. Xét học bạ THPT
+        elif "học bạ" in m_lower or "hoc ba" in m_lower or "học b" in m_lower or "hoc b" in m_lower or "ptxt 200" in m_lower or m_clean in ["Điểmhọc bạ", "Điểm học bạ"]:
+            norm_method = "Xét học bạ THPT"
+
+        # 8. Chứng chỉ quốc tế (IELTS/SAT/ACT)
+        elif "quốc tế" in m_lower or "quoc te" in m_lower or "ielts" in m_lower or "sat" in m_lower or "act" in m_lower or "ccqt" in m_lower or "chứng chỉ" in m_lower:
+            norm_method = "Chứng chỉ quốc tế (IELTS/SAT/ACT)"
+
+        # 9. Tuyển thẳng & Ưu tiên xét tuyển
+        elif "ưtxt" in m_lower or "utxt" in m_lower or "tuyển thẳng" in m_lower or "xt thẳng" in m_lower:
+            norm_method = "Tuyển thẳng & Ưu tiên xét tuyển"
+
+        # 10. Xét tuyển kết hợp
+        elif "kết hợp" in m_lower or "ket hop" in m_lower or "xtkh" in m_lower or m_lower in ["pt2a", "pt2c", "pt3", "pt4", "ptxt 402"]:
+            norm_method = "Xét tuyển kết hợp"
+
+        # 11. Điểm thi tốt nghiệp THPT
+        elif "thpt" in m_lower or "tốt nghiệp" in m_lower or "ptxt 100" in m_lower or m_clean in ["ĐiểmTHPT", "THPT", "Điểm thi THPT"]:
+            norm_method = "Điểm thi tốt nghiệp THPT"
+
+        # 12. Generic ĐGNL
+        elif "đgnl" in m_lower or "năng lực" in m_lower:
+            if school_code and any(hcm_kw in school_code for hcm_kw in ["DKC", "QS", "IUH", "SG", "UEH", "TDM"]):
+                norm_method = "Đánh giá năng lực ĐHQG TP.HCM (V-ACT)"
+            else:
+                norm_method = "Đánh giá năng lực (ĐGNL)"
+
+        # 13. Thi năng khiếu / Thi riêng
+        elif "năng khiếu" in m_lower or "thi riêng" in m_lower:
+            norm_method = "Thi năng khiếu & Thi riêng"
+
+        else:
+            norm_method = m_clean if m_clean else "Điểm thi tốt nghiệp THPT"
+
+        # Chuẩn hóa tổ hợp môn
+        if s_clean:
+            s_clean = re.sub(r"[,;]+", "; ", s_clean)
+            s_clean = re.sub(r"\s+", " ", s_clean).strip("; ")
+            s_clean = re.sub(r"\bBO3\b", "B03", s_clean)
+            s_clean = re.sub(r"\bAU\b", "A11", s_clean)
+
+        return norm_method, s_clean
+
+    @staticmethod
     def parse_university_list(html: str) -> List[Dict[str, Any]]:
         """
         Bóc tách danh sách các trường đại học từ trang chính diem-chuan.html
@@ -15,12 +115,10 @@ class TuyensinhParser:
 
         for a in soup.find_all("a", href=True):
             href = a["href"].strip()
-            # Match pattern /diem-chuan/slug-CODE.html
             m = re.search(r"^/diem-chuan/([a-zA-Z0-9\-]+)-([A-Z0-9]+)\.html$", href)
             if m:
                 code = m.group(2).upper()
                 raw_text = a.text.strip()
-                # Text usually like "BKA - Đại Học Bách Khoa Hà Nội"
                 if " - " in raw_text:
                     parts = raw_text.split(" - ", 1)
                     name = parts[1].strip()
@@ -50,7 +148,7 @@ class TuyensinhParser:
         soup = BeautifulSoup(html, "html.parser")
         scores = []
 
-        # Phát hiện năm chung của trang từ tiêu đề (ví dụ: 'Điểm chuẩn ... 2026 chính xác')
+        # Phát hiện năm chung của trang từ tiêu đề
         page_title = soup.title.string if soup.title else ""
         year_match = re.search(r"202[0-9]", page_title)
         page_default_year = int(year_match.group(0)) if year_match else (target_year or 2026)
@@ -63,9 +161,11 @@ class TuyensinhParser:
             curr = table
             while curr:
                 curr = curr.previous_element
-                if curr and getattr(curr, "name", None) in ["h1", "h2", "h3", "h4", "h5"]:
-                    heading_text = curr.text.strip()
-                    break
+                if curr and getattr(curr, "name", None) in ["h1", "h2", "h3", "h4", "h5", "b", "strong"]:
+                    t = curr.text.strip()
+                    if len(t) > 5 and ("điểm" in t.lower() or "phương thức" in t.lower() or "202" in t.lower()):
+                        heading_text = t
+                        break
 
             # Xác định năm của bảng này
             table_year = page_default_year
@@ -73,29 +173,27 @@ class TuyensinhParser:
             if h_year:
                 table_year = int(h_year.group(1) or h_year.group(2))
 
-            # Xác định phương thức từ tiêu đề
-            method = "Điểm thi THPT"
+            # Xác định phương thức thô từ tiêu đề
+            raw_method = "Điểm thi tốt nghiệp THPT"
             if "phương thức" in heading_text.lower():
-                # ví dụ: "Điểm chuẩn theo phương thức Điểm thi THPT năm 2025"
                 m_method = re.search(r"phương thức\s*(.*?)(?:\s*năm|\s*$)", heading_text, re.I)
                 if m_method:
-                    method = m_method.group(1).strip()
+                    raw_method = m_method.group(1).strip()
             elif "đgnl" in heading_text.lower():
-                method = "Đánh giá năng lực"
+                raw_method = "Đánh giá năng lực"
             elif "đgtd" in heading_text.lower():
-                method = "Đánh giá tư duy"
+                raw_method = "Đánh giá tư duy"
             elif "học bạ" in heading_text.lower():
-                method = "Xét học bạ"
+                raw_method = "Xét học bạ"
 
             # 2. Xử lý các hàng của bảng
             rows = table.find_all("tr")
             if not rows:
                 continue
 
-            # Kiểm tra xem có thead / multi-level header (như bảng YHB 2026) hay không
+            # Kiểm tra xem có thead đa hàng (bảng đa cột phương thức) hay không
             thead = table.find("thead")
             if thead and len(thead.find_all("tr")) > 1:
-                # Bảng cấu trúc phức tạp nhiều phương thức
                 parsed_complex = TuyensinhParser._parse_complex_table(
                     table, school_code, school_name, table_year
                 )
@@ -103,7 +201,7 @@ class TuyensinhParser:
                 continue
 
             # Bảng đơn chuẩn (1 hàng header)
-            header_cells = [c.text.strip() for c in rows[0].find_all(["th", "td"])]
+            header_cells = [c.text.strip().replace("\xa0", " ") for c in rows[0].find_all(["th", "td"])]
             col_map = TuyensinhParser._map_table_columns(header_cells)
 
             # Duyệt từng dòng dữ liệu
@@ -145,7 +243,7 @@ class TuyensinhParser:
                 if not major_name:
                     continue
 
-                # Tách ghi chú phương thức con nếu bị dính vào tên ngành kiểu "Tên ngành(XTTN diện 1.3...)"
+                # Tách ghi chú phương thức con nếu bị dính vào tên ngành
                 m_sub_note = re.search(r'\s*(\((?:XTTN|Điểm đã được quy đổi|Kết hợp|CCNN|Xét tuyển|dựa trên).*?\))$', major_name, re.I)
                 if m_sub_note:
                     extra_from_name = m_sub_note.group(1).strip('()')
@@ -158,24 +256,33 @@ class TuyensinhParser:
                     if code_in_name:
                         major_code = code_in_name.group(1)
 
-                # Chuyển đổi điểm số
-                numeric_score = TuyensinhParser._clean_score(score_str)
-
                 # Nếu cột ghi chú/kết hợp chứa phương thức chi tiết
-                row_method = method
+                row_method = raw_method
                 if "kết hợp" in col_map and col_map.get("kết hợp") and col_map["kết hợp"] < len(cells):
                     extra_method = cells[col_map["kết hợp"]]
                     if extra_method and len(extra_method) > 2:
                         notes = f"{notes}; {extra_method}".strip("; ")
 
+                # Chuyển đổi điểm số
+                numeric_score = TuyensinhParser._clean_score(score_str)
+
+                # Chuẩn hóa phương thức xét tuyển & tổ hợp môn (K00, Q00...)
+                norm_method, clean_subject = TuyensinhParser.normalize_method_and_subject(
+                    raw_method=row_method,
+                    raw_subject=subject_group,
+                    notes=notes,
+                    score=numeric_score,
+                    school_code=school_code
+                )
+
                 scores.append({
                     "university_code": school_code,
                     "university_name": school_name,
                     "year": table_year,
-                    "method": row_method,
+                    "method": norm_method,
                     "major_code": major_code,
                     "major_name": major_name,
-                    "subject_group": subject_group,
+                    "subject_group": clean_subject,
                     "cutoff_score": numeric_score,
                     "cutoff_score_text": score_str if score_str else (str(numeric_score) if numeric_score is not None else ""),
                     "notes": notes,
@@ -189,16 +296,16 @@ class TuyensinhParser:
         """Tự động ánh xạ chỉ số các cột dựa vào tên tiêu đề"""
         col_map = {}
         for idx, h in enumerate(headers):
-            hl = h.lower()
-            if "mã ngành" in hl or "mã xét tuyển" in hl or "mã ptxt" in hl:
+            hl = h.lower().replace("\xa0", " ")
+            if "mã ngành" in hl or "mã xét tuyển" in hl or "mã ptxt" in hl or ("mã" in hl and "ngành" not in hl):
                 col_map["major_code"] = idx
-            elif "tên ngành" in hl or "ngành" in hl or "chuyên ngành" in hl:
+            elif "tên ngành" in hl or "ngành" in hl or "chuyên ngành" in hl or "chương trình" in hl:
                 col_map["major_name"] = idx
             elif "tổ hợp" in hl or "khối" in hl:
                 col_map["subject"] = idx
             elif "chỉ tiêu" in hl:
                 col_map["quota"] = idx
-            elif "điểm chuẩn" in hl or "điểm trúng tuyển" in hl:
+            elif "điểm chuẩn" in hl or "điểm trúng tuyển" in hl or "điểm xét tuyển" in hl:
                 col_map["score"] = idx
             elif "phương thức kết hợp" in hl:
                 col_map["kết hợp"] = idx
@@ -223,50 +330,105 @@ class TuyensinhParser:
         year: int
     ) -> List[Dict[str, Any]]:
         """
-        Xử lý bảng phức tạp với nhiều phương thức xét tuyển xếp theo từng cột (như Y Hà Nội 2026)
+        Xử lý bảng phức tạp với nhiều phương thức xét tuyển xếp theo từng cột
+        (ví dụ: HUTECH DKC, Đại học Y Hà Nội YHB 2026...)
         """
         results = []
         thead = table.find("thead")
+        if not thead:
+            return results
+
         header_rows = thead.find_all("tr")
-        
-        # Hàng 1 có STT, Mã xét tuyển, Tên ngành, Chỉ tiêu 2026, Điểm trúng tuyển (colspan)
-        # Hàng 2 có các phương thức con (PTXT 100, PTXT 402...)
-        sub_methods = [td.text.strip() for td in header_rows[1].find_all(["th", "td"])]
-        
+        if len(header_rows) < 2:
+            return results
+
+        # Hàng 0 có các cột chung (rowspan=2) và cột điểm chuẩn gộp (colspan > 1)
+        r0_cells = header_rows[0].find_all(["th", "td"])
+        r1_cells = header_rows[1].find_all(["th", "td"])
+        sub_methods = [td.text.strip().replace("\xa0", " ") for td in r1_cells]
+
+        col_map = {}
+        current_col = 0
+        score_start_col = -1
+
+        for c in r0_cells:
+            txt = c.text.strip().lower().replace("\xa0", " ")
+            colspan = int(c.get("colspan", 1))
+
+            if colspan > 1:
+                score_start_col = current_col
+                current_col += colspan
+            else:
+                if "mã ngành" in txt or "mã xét tuyển" in txt or "mã" in txt:
+                    col_map["major_code"] = current_col
+                elif "tên ngành" in txt or "ngành" in txt or "chương trình" in txt:
+                    col_map["major_name"] = current_col
+                elif "tổ hợp" in txt or "khối" in txt:
+                    col_map["subject"] = current_col
+                elif "chỉ tiêu" in txt:
+                    col_map["quota"] = current_col
+                elif "ghi chú" in txt:
+                    col_map["notes"] = current_col
+                current_col += 1
+
+        if score_start_col == -1:
+            score_start_col = len(r0_cells)
+
         tbody = table.find("tbody") or table
         for tr in tbody.find_all("tr"):
+            if tr.parent == thead:
+                continue
+
             cells = [td.text.strip().replace("\xa0", " ") for td in tr.find_all(["th", "td"])]
-            if len(cells) < 4:
+            if len(cells) <= score_start_col:
                 continue
             if any("tuyensinh247" in c.lower() for c in cells):
                 continue
 
-            # Thường cấu trúc: [STT, Mã xét tuyển, Tên ngành, Chỉ tiêu, Điểm PTXT 1, Điểm PTXT 2...]
-            # Tìm xem cột nào là tên ngành
-            stt = cells[0]
-            major_code = cells[1] if len(cells) > 1 else ""
-            major_name = cells[2] if len(cells) > 2 else ""
-            quota = cells[3] if len(cells) > 3 else ""
+            major_code = cells[col_map["major_code"]] if "major_code" in col_map and col_map["major_code"] < len(cells) else ""
+            major_name = cells[col_map["major_name"]] if "major_name" in col_map and col_map["major_name"] < len(cells) else ""
+            subject_group = cells[col_map["subject"]] if "subject" in col_map and col_map["subject"] < len(cells) else ""
+            quota = cells[col_map["quota"]] if "quota" in col_map and col_map["quota"] < len(cells) else ""
+            notes = cells[col_map["notes"]] if "notes" in col_map and col_map["notes"] < len(cells) else ""
 
-            # Các cột điểm tiếp theo tương ứng với sub_methods
-            score_cells = cells[4:]
-            for i, score_val in enumerate(score_cells):
-                if not score_val or score_val in ["-", "–", ""]:
+            # Đổi lại vị trí nếu tên ngành bị nhầm thành mã số
+            if major_name.isdigit() and not major_code.isdigit():
+                major_name, major_code = major_code, major_name
+
+            if not major_name:
+                continue
+
+            # Duyệt các cột điểm tương ứng từng phương thức con
+            for i, method_raw in enumerate(sub_methods):
+                col_idx = score_start_col + i
+                if col_idx >= len(cells):
+                    break
+                score_val = cells[col_idx].strip()
+                if not score_val or score_val in ["-", "–", "N/A", ""]:
                     continue
-                method_name = sub_methods[i] if i < len(sub_methods) else f"PTXT {i+1}"
+
                 numeric_score = TuyensinhParser._clean_score(score_val)
-                
+
+                # Chuẩn hóa phương thức & tổ hợp
+                norm_method, clean_subject = TuyensinhParser.normalize_method_and_subject(
+                    raw_method=method_raw,
+                    raw_subject=subject_group,
+                    notes=notes,
+                    score=numeric_score,
+                    school_code=school_code
+                )
+
                 results.append({
                     "university_code": school_code,
                     "university_name": school_name,
                     "year": year,
-                    "method": method_name,
+                    "method": norm_method,
                     "major_code": major_code,
                     "major_name": major_name,
-                    "subject_group": "",
+                    "subject_group": clean_subject,
                     "cutoff_score": numeric_score,
                     "cutoff_score_text": score_val,
-                    "notes": "",
+                    "notes": notes,
                     "quota": quota
                 })
 
@@ -278,12 +440,10 @@ class TuyensinhParser:
         if not score_str:
             return None
         cleaned = score_str.strip().replace(",", ".")
-        # Trích xuất số thực đầu tiên trong chuỗi
         m = re.search(r"(\d+(?:\.\d+)?)", cleaned)
         if m:
             try:
                 val = float(m.group(1))
-                # Điểm chuẩn thường từ 10 đến 1200 (ĐGNL/ĐGTD)
                 if 0 <= val <= 1500:
                     return val
             except ValueError:

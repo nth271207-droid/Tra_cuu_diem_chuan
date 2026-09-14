@@ -22,6 +22,16 @@ class Database:
         finally:
             conn.close()
 
+    def reset_db(self):
+        """Xoá sạch toàn bộ dữ liệu trong CSDL và khởi tạo lại cấu trúc bảng"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DROP TABLE IF EXISTS admission_scores;")
+            cursor.execute("DROP TABLE IF EXISTS crawl_logs;")
+            cursor.execute("DROP TABLE IF EXISTS universities;")
+            conn.commit()
+        self.init_db()
+
     def init_db(self):
         """Khởi tạo các bảng và chỉ mục tối ưu cho việc tra cứu"""
         with self.get_connection() as conn:

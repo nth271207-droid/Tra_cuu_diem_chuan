@@ -62,7 +62,14 @@ document.addEventListener("DOMContentLoaded", () => {
         "D15": ["van", "dia", "anh"],
         "D66": ["van", "gdcd", "anh"],
         "D78": ["van", "anh"],
-        "D84": ["toan", "gdcd", "anh"]
+        "D84": ["toan", "gdcd", "anh"],
+        "X01": ["toan", "anh"],
+        "X02": ["toan", "ly"],
+        "X06": ["toan", "hoa"],
+        "X26": ["toan", "sinh"],
+        "V00": ["toan", "ly"],
+        "V01": ["toan", "van"],
+        "H01": ["toan", "van"]
     };
 
     // DOM Elements - Navigation Tabs
@@ -181,6 +188,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     selectThptCombo.addEventListener("change", () => {
+        const cVal = selectThptCombo.value.trim();
+        if (cVal === "K00") {
+            inputThptScore.placeholder = "Ví dụ: 68.5 (Thang 100 ĐGTD)";
+            inputThptScore.max = "100";
+        } else if (cVal === "Q00") {
+            inputThptScore.placeholder = "Ví dụ: 105.0 (Thang 150 HSA)";
+            inputThptScore.max = "150";
+        } else {
+            inputThptScore.placeholder = "Ví dụ: 24.5";
+            inputThptScore.max = "30";
+        }
         calculateScoreFromSubjects();
         handleThptAnalysis();
     });
@@ -427,19 +445,33 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (!matchKw) return;
             }
 
-            // Lọc phương thức THPT (loại bỏ hẳn các phương thức thi riêng)
+            // Lọc phương thức theo tổ hợp (THPT chuẩn, hoặc K00 ĐGTD, hoặc Q00 ĐGNL)
             (item.methods || []).forEach(m => {
                 const mName = m.method || "";
-                const isThpt = mName.includes("THPT") || 
-                               mName.includes("100") || 
-                               (m.cutoff_score !== null && m.cutoff_score <= 30.5 && m.cutoff_score >= 12.0 &&
-                                !mName.includes("TSA") && !mName.includes("ĐGTD") && !mName.includes("HSA") && !mName.includes("V-ACT") && !mName.includes("quốc tế"));
+                const sGrp = m.subject_group || "";
 
-                if (!isThpt) return;
+                let matchesMethod = false;
+                if (selectedCombo === "K00") {
+                    matchesMethod = mName.includes("TSA") || mName.includes("tư duy") || sGrp.includes("K00");
+                } else if (selectedCombo === "Q00") {
+                    matchesMethod = mName.includes("HSA") || mName.includes("Hà Nội") || sGrp.includes("Q00");
+                } else {
+                    matchesMethod = mName.includes("THPT") || mName.includes("100") || 
+                                   (m.cutoff_score !== null && m.cutoff_score <= 30.5 && m.cutoff_score >= 10.0 &&
+                                    !mName.includes("TSA") && !mName.includes("ĐGTD") && !mName.includes("HSA") && !mName.includes("V-ACT") && !mName.includes("quốc tế"));
+                }
 
-                // Lọc theo tổ hợp môn được chọn (ví dụ: A00, D01...)
+                if (!matchesMethod) return;
+
+                // Lọc theo tổ hợp môn được chọn (ví dụ: A00, D01, K00, Q00...)
                 if (selectedCombo) {
-                    if (!m.subject_group || !m.subject_group.includes(selectedCombo)) return;
+                    if (selectedCombo === "K00") {
+                        if (!sGrp.includes("K00") && !mName.includes("TSA")) return;
+                    } else if (selectedCombo === "Q00") {
+                        if (!sGrp.includes("Q00") && !mName.includes("HSA")) return;
+                    } else {
+                        if (!sGrp.includes(selectedCombo)) return;
+                    }
                 }
 
                 const cutoff = m.cutoff_score;
@@ -579,13 +611,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (isThpt) return;
 
                 // Lọc theo loại phương thức riêng được chọn
-                if (methodType === "tsa" && !mName.includes("TSA") && !mName.includes("ĐGTD")) return;
-                if (methodType === "hsa" && !mName.includes("HSA")) return;
+                if (methodType === "tsa" && !mName.includes("TSA") && !mName.includes("ĐGTD") && !(m.subject_group || "").includes("K00")) return;
+                if (methodType === "hsa" && !mName.includes("HSA") && !(m.subject_group || "").includes("Q00")) return;
                 if (methodType === "vact" && !mName.includes("V-ACT") && !mName.includes("ĐGNL ĐHQG-HCM")) return;
-                if (methodType === "spt" && !mName.includes("SPT")) return;
+                if (methodType === "vsat" && !mName.includes("V-SAT") && !mName.includes("VSAT") && !mName.includes("đầu vào")) return;
+                if (methodType === "spt" && !mName.includes("SPT") && !mName.includes("Sư phạm")) return;
+                if (methodType === "bca" && !mName.includes("Công An") && !mName.includes("BCA") && !mName.includes("QDA")) return;
                 if (methodType === "hocba" && !mName.includes("học bạ") && !mName.includes("Học bạ")) return;
                 if (methodType === "ccqt" && !mName.includes("quốc tế") && !mName.includes("CCQT") && !mName.includes("SAT") && !mName.includes("IELTS")) return;
-                if (methodType === "kethop" && !mName.includes("kết hợp") && !mName.includes("ƯTXT")) return;
+                if (methodType === "kethop" && !mName.includes("kết hợp") && !mName.includes("PT2") && !mName.includes("PT3") && !mName.includes("PT4")) return;
+                if (methodType === "tuyenthang" && !mName.includes("Tuyển thẳng") && !mName.includes("ƯTXT")) return;
 
                 const cutoff = m.cutoff_score;
                 if (userScore !== null && cutoff !== null && cutoff > 0) {

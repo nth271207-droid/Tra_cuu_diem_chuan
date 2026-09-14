@@ -98,6 +98,11 @@
                                 <select id="select-thpt-combo" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 font-bold text-slate-800 text-sm focus:outline-none focus:border-blue-600 bg-slate-50/80 shadow-xs">
                                     <option value="">-- Tất cả các tổ hợp môn --</option>
                                     
+                                    <optgroup label="⭐ Tổ Hợp Bài Thi Riêng Đặc Biệt (K00, Q00)">
+                                        <option value="K00">K00: Đánh giá tư duy Bách Khoa (TSA - thang 100)</option>
+                                        <option value="Q00">Q00: Đánh giá năng lực ĐHQG Hà Nội (HSA - thang 150)</option>
+                                    </optgroup>
+
                                     <optgroup label="Khối A: Tự Nhiên, Kỹ Thuật, Công Nghệ, Kinh Tế">
                                         <option value="A00" selected>A00: Toán, Vật lý, Hóa học</option>
                                         <option value="A01">A01: Toán, Vật lý, Tiếng Anh</option>
@@ -153,6 +158,23 @@
                                         <option value="D84">D84: Toán, GDCD, Tiếng Anh</option>
                                         <option value="D90">D90: Toán, KHTN, Tiếng Anh</option>
                                         <option value="D96">D96: Toán, KHXH, Tiếng Anh</option>
+                                    </optgroup>
+
+                                    <optgroup label="Tổ Hợp Mới GDPT 2018 (Khối X: Có Tin Học / Công Nghệ)">
+                                        <option value="X01">X01: Toán, Tin học, Tiếng Anh</option>
+                                        <option value="X02">X02: Toán, Vật lý, Tin học</option>
+                                        <option value="X06">X06: Toán, Hóa học, Tin học</option>
+                                        <option value="X26">X26: Toán, Sinh học, Tin học</option>
+                                    </optgroup>
+
+                                    <optgroup label="Tổ Hợp Năng Khiếu (Kiến Trúc, Mỹ Thuật, Báo Chí, TDTT)">
+                                        <option value="V00">V00: Toán, Vật lý, Vẽ hình họa mỹ thuật</option>
+                                        <option value="V01">V01: Toán, Ngữ văn, Vẽ hình họa mỹ thuật</option>
+                                        <option value="H00">H00: Ngữ văn, Năng khiếu vẽ 1, Năng khiếu vẽ 2</option>
+                                        <option value="H01">H01: Toán, Ngữ văn, Năng khiếu vẽ</option>
+                                        <option value="M00">M00: Ngữ văn, Toán, Năng khiếu mầm non</option>
+                                        <option value="T00">T00: Toán, Sinh học, Năng khiếu TDTT</option>
+                                        <option value="R00">R00: Ngữ văn, Lịch sử, Năng khiếu Báo chí</option>
                                     </optgroup>
                                 </select>
                             </div>
@@ -359,13 +381,16 @@
                                 </label>
                                 <select id="select-other-method-type" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 font-bold text-slate-800 text-sm focus:outline-none focus:border-purple-600 bg-slate-50/80 shadow-xs">
                                     <option value="">-- Tất cả phương thức riêng --</option>
-                                    <option value="tsa">🧠 Điểm Đánh giá tư duy (TSA - Bách Khoa, thang 100)</option>
-                                    <option value="hsa">⚡ Điểm Đánh giá năng lực ĐHQG Hà Nội (HSA, thang 150)</option>
-                                    <option value="vact">🌟 Điểm ĐGNL ĐHQG TP.HCM (V-ACT, thang 1200)</option>
-                                    <option value="spt">🎓 Điểm ĐGNL Trường ĐH Sư Phạm (SPT)</option>
+                                    <option value="tsa">🧠 Đánh giá tư duy Bách Khoa (TSA / K00, thang 100)</option>
+                                    <option value="hsa">⚡ Đánh giá năng lực ĐHQG Hà Nội (HSA / Q00, thang 150)</option>
+                                    <option value="vact">🌟 Đánh giá năng lực ĐHQG TP.HCM (V-ACT, thang 1200)</option>
+                                    <option value="vsat">📝 Đánh giá đầu vào Đại học (V-SAT)</option>
+                                    <option value="spt">🎓 Đánh giá năng lực Sư phạm (SPT)</option>
+                                    <option value="bca">👮 Đánh giá Bộ Công An / Quân đội (BCA/QDA)</option>
                                     <option value="hocba">📖 Điểm Xét Tuyển Học Bạ THPT</option>
                                     <option value="ccqt">🌍 Chứng Chỉ Quốc Tế (SAT, ACT, IELTS...)</option>
-                                    <option value="kethop">🤝 Điểm Xét Tuyển Kết Hợp / Ưu Tiên Xét Tuyển</option>
+                                    <option value="kethop">🤝 Điểm Xét Tuyển Kết Hợp</option>
+                                    <option value="tuyenthang">🏅 Tuyển Thẳng & Ưu Tiên Xét Tuyển</option>
                                 </select>
                             </div>
 
