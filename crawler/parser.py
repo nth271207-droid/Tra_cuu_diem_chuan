@@ -15,7 +15,8 @@ class TuyensinhParser:
     ) -> Tuple[str, str]:
         """
         Chuẩn hóa tên phương thức và tổ hợp môn về các danh mục chuẩn.
-        Đặc biệt nhận diện và gán chính xác mã K00 (ĐGTD Bách Khoa) và Q00 (ĐGNL ĐHQGHN).
+        Đặc biệt nhận diện và gán chính xác mã K00 (ĐGTD Bách Khoa, thang 100)
+        và Q00 (ĐGNL ĐHQGHN, thang 150), đối chiếu thang điểm để tránh nhầm lẫn.
         """
         m_clean = raw_method.strip() if raw_method else ""
         s_clean = raw_subject.strip() if raw_subject else ""
@@ -29,46 +30,82 @@ class TuyensinhParser:
         m_lower = m_clean.lower()
         s_lower = s_clean.lower()
         s_upper = s_clean.upper()
+        n_lower = n_clean.lower()
 
-        # 1. Đánh giá tư duy Bách Khoa (TSA) - Mã tổ hợp K00
-        if "k00" in s_lower or "k00" in m_lower or "tsa" in m_lower or "tư duy" in m_lower or "đgtd" in m_lower or "đhbkhn" in m_lower:
+        is_score_over_150 = score is not None and score > 150
+        is_score_over_100 = score is not None and score > 100
+
+        # 1. Đánh giá năng lực ĐHQG TP.HCM (V-ACT) - thang 1200
+        # Nhận diện sớm nếu có từ khóa V-ACT/HCM hoặc điểm số > 150 (điểm quy đổi sang V-ACT)
+        # Chú ý: nếu ghi chú "sang hsa" và điểm <= 150 thì thuộc về HSA, không phải V-ACT
+        if not ("sang hsa" in n_lower and score is not None and score <= 150) and (
+            "sang v-act" in n_lower or "sang vact" in n_lower or "v-act" in m_lower or "vact" in m_lower or (
+                "v-act" in n_lower and not ("sang hsa" in n_lower or "sang tsa" in n_lower)
+            ) or (
+                is_score_over_150 and score <= 1200 and ("đgnl" in m_lower or "v-act" in n_lower or "hcm" in n_lower or "tp" in m_lower)
+            ) or ("đgnl" in m_lower and ("hcm" in m_lower or "tp.hcm" in m_lower or "tp hcm" in m_lower or "hồ chí minh" in m_lower))
+        ):
+            norm_method = "Đánh giá năng lực ĐHQG TP.HCM (V-ACT)"
+            s_clean = re.sub(r"\b[QK]00\b[;\s]*", "", s_clean).strip("; ")
+
+        # 2. Chứng chỉ quốc tế (IELTS/SAT/ACT) - SAT thang 1600
+        elif "quốc tế" in m_lower or "quoc te" in m_lower or "ielts" in m_lower or "sat" in m_lower or "act" in m_lower or "ccqt" in m_lower or "chứng chỉ" in m_lower or (
+            score is not None and score > 1200 and score <= 1600
+        ):
+            norm_method = "Chứng chỉ quốc tế (IELTS/SAT/ACT)"
+            s_clean = re.sub(r"\b[QK]00\b[;\s]*", "", s_clean).strip("; ")
+
+        # 3. Đánh giá tư duy Bách Khoa (TSA) - Mã tổ hợp K00, thang 100
+        # Điểm TSA tối đa là 100 điểm. Nếu điểm > 100 thì KHÔNG PHẢI TSA (ví dụ HHT bị Tuyensinh247 copy nhầm điểm HSA 111.03 sang TSA)
+        elif not is_score_over_100 and not ("sang hsa" in n_lower or "sang v-act" in n_lower or "sang vact" in n_lower) and (
+            "sang tsa" in n_lower or "tsa" in m_lower or "đgtd" in m_lower or "tư duy" in m_lower or "đhbkhn" in m_lower or "tsa" in n_lower or (
+                "k00" in m_lower or s_clean == "K00" or s_clean.startswith("K00;")
+            )
+        ):
             norm_method = "Đánh giá tư duy Bách Khoa (TSA)"
+            # Loại bỏ mã Q00 nếu bị nhầm sang TSA
+            s_clean = re.sub(r"\bQ00\b[;\s]*", "", s_clean).strip("; ")
+            s_u = s_clean.upper()
             if not s_clean or s_clean in ["-", "–"]:
                 s_clean = "K00"
-            elif "K00" not in s_upper:
+            elif "K00" not in s_u and not any(c in s_u for c in ["A00", "A01", "D01"]):
                 s_clean = f"K00; {s_clean}".strip("; ")
 
-        # 2. Đánh giá năng lực ĐHQG Hà Nội (HSA) - Mã tổ hợp Q00
-        elif "q00" in s_lower or "q00" in m_lower or "hsa" in m_lower or ("đgnl" in m_lower and ("hà nội" in m_lower or "đhqghn" in m_lower)):
+        # 4. Đánh giá năng lực ĐHQG Hà Nội (HSA) - Mã tổ hợp Q00, thang 150
+        elif not is_score_over_150 and not ("sang v-act" in n_lower or "sang vact" in n_lower or "sang tsa" in n_lower) and (
+            "sang hsa" in n_lower or "hsa" in m_lower or "hsa" in n_lower or "q00" in m_lower or s_clean == "Q00" or s_clean.startswith("Q00;") or (
+                "đgnl" in m_lower and ("hà nội" in m_lower or "đhqghn" in m_lower or "hanoi" in m_lower)
+            ) or (
+                is_score_over_100 and score <= 150 and ("tsa" in m_lower or "đgnl" in m_lower or "tư duy" in m_lower)
+            )
+        ):
             norm_method = "Đánh giá năng lực ĐHQG Hà Nội (HSA)"
+            # Loại bỏ mã K00 nếu bị nhầm sang HSA
+            s_clean = re.sub(r"\bK00\b[;\s]*", "", s_clean).strip("; ")
+            s_u = s_clean.upper()
             if not s_clean or s_clean in ["-", "–"]:
                 s_clean = "Q00"
-            elif "Q00" not in s_upper:
+            elif "Q00" not in s_u and not any(c in s_u for c in ["A00", "A01", "D01"]):
                 s_clean = f"Q00; {s_clean}".strip("; ")
 
-        # 3. Đánh giá năng lực ĐHQG TP.HCM (V-ACT)
-        elif "v-act" in m_lower or "vact" in m_lower or ("đgnl" in m_lower and ("hcm" in m_lower or "tp.hcm" in m_lower or "tp" in m_lower)):
-            norm_method = "Đánh giá năng lực ĐHQG TP.HCM (V-ACT)"
-
-        # 4. Đánh giá đầu vào Đại học V-SAT
+        # 5. Đánh giá đầu vào Đại học V-SAT
         elif "v-sat" in m_lower or "vsat" in m_lower or "đầu vào" in m_lower or "v_sat" in m_lower:
             norm_method = "Đánh giá đầu vào V-SAT"
+            s_clean = re.sub(r"\b[QK]00\b[;\s]*", "", s_clean).strip("; ")
 
-        # 5. Đánh giá năng lực Sư phạm (SPT)
+        # 6. Đánh giá năng lực Sư phạm (SPT)
         elif "spt" in m_lower or "sp2e" in m_lower or ("đgnl" in m_lower and ("sư phạm" in m_lower or "đhsp" in m_lower)):
             norm_method = "Đánh giá năng lực Sư phạm (SPT)"
+            s_clean = re.sub(r"\b[QK]00\b[;\s]*", "", s_clean).strip("; ")
 
-        # 6. Đánh giá Bộ Công An / Quân đội (BCA/QDA)
-        elif "qda" in m_lower or "bca" in m_lower or "công an" in m_lower:
+        # 7. Đánh giá Bộ Công An / Quân đội (BCA/QDA)
+        elif "sang qda" in n_lower or "qda" in m_lower or "bca" in m_lower or "công an" in m_lower:
             norm_method = "Đánh giá Bộ Công An (BCA/QDA)"
+            s_clean = re.sub(r"\b[QK]00\b[;\s]*", "", s_clean).strip("; ")
 
-        # 7. Xét học bạ THPT
-        elif "học bạ" in m_lower or "hoc ba" in m_lower or "học b" in m_lower or "hoc b" in m_lower or "ptxt 200" in m_lower or m_clean in ["Điểmhọc bạ", "Điểm học bạ"]:
+        # 8. Xét học bạ THPT
+        elif "học bạ" in m_lower or "hoc ba" in m_lower or "học b" in m_lower or "hoc b" in m_lower or "ptxt 200" in m_lower or m_clean in ["Điểmhọc bạ", "Điểm học bạ", "Điểm chuẩn HB", "HB"]:
             norm_method = "Xét học bạ THPT"
-
-        # 8. Chứng chỉ quốc tế (IELTS/SAT/ACT)
-        elif "quốc tế" in m_lower or "quoc te" in m_lower or "ielts" in m_lower or "sat" in m_lower or "act" in m_lower or "ccqt" in m_lower or "chứng chỉ" in m_lower:
-            norm_method = "Chứng chỉ quốc tế (IELTS/SAT/ACT)"
 
         # 9. Tuyển thẳng & Ưu tiên xét tuyển
         elif "ưtxt" in m_lower or "utxt" in m_lower or "tuyển thẳng" in m_lower or "xt thẳng" in m_lower:
@@ -79,7 +116,7 @@ class TuyensinhParser:
             norm_method = "Xét tuyển kết hợp"
 
         # 11. Điểm thi tốt nghiệp THPT
-        elif "thpt" in m_lower or "tốt nghiệp" in m_lower or "ptxt 100" in m_lower or m_clean in ["ĐiểmTHPT", "THPT", "Điểm thi THPT"]:
+        elif "thpt" in m_lower or "tốt nghiệp" in m_lower or "ptxt 100" in m_lower or m_clean in ["ĐiểmTHPT", "THPT", "Điểm thi THPT", "Điểm chuẩn THPT"]:
             norm_method = "Điểm thi tốt nghiệp THPT"
 
         # 12. Generic ĐGNL
@@ -98,6 +135,8 @@ class TuyensinhParser:
 
         # Chuẩn hóa tổ hợp môn
         if s_clean:
+            if norm_method not in ["Đánh giá tư duy Bách Khoa (TSA)", "Đánh giá năng lực ĐHQG Hà Nội (HSA)"]:
+                s_clean = re.sub(r"\b[QK]00\b[;\s]*", "", s_clean).strip("; ")
             s_clean = re.sub(r"[,;]+", "; ", s_clean)
             s_clean = re.sub(r"\s+", " ", s_clean).strip("; ")
             s_clean = re.sub(r"\bBO3\b", "B03", s_clean)
@@ -175,16 +214,23 @@ class TuyensinhParser:
 
             # Xác định phương thức thô từ tiêu đề
             raw_method = "Điểm thi tốt nghiệp THPT"
-            if "phương thức" in heading_text.lower():
+            h_low = heading_text.lower()
+            if "phương thức" in h_low:
                 m_method = re.search(r"phương thức\s*(.*?)(?:\s*năm|\s*$)", heading_text, re.I)
                 if m_method:
                     raw_method = m_method.group(1).strip()
-            elif "đgnl" in heading_text.lower():
+            elif "đgnl hsa" in h_low or "hsa" in h_low:
+                raw_method = "Đánh giá năng lực ĐHQG Hà Nội (HSA)"
+            elif "đgtd tsa" in h_low or "tsa" in h_low:
+                raw_method = "Đánh giá tư duy Bách Khoa (TSA)"
+            elif "v-act" in h_low or "vact" in h_low:
+                raw_method = "Đánh giá năng lực ĐHQG TP.HCM (V-ACT)"
+            elif "đgtd" in h_low or "tư duy" in h_low:
+                raw_method = "Đánh giá tư duy Bách Khoa (TSA)"
+            elif "đgnl" in h_low:
                 raw_method = "Đánh giá năng lực"
-            elif "đgtd" in heading_text.lower():
-                raw_method = "Đánh giá tư duy"
-            elif "học bạ" in heading_text.lower():
-                raw_method = "Xét học bạ"
+            elif "học bạ" in h_low:
+                raw_method = "Xét học bạ THPT"
 
             # 2. Xử lý các hàng của bảng
             rows = table.find_all("tr")
@@ -204,6 +250,43 @@ class TuyensinhParser:
             header_cells = [c.text.strip().replace("\xa0", " ") for c in rows[0].find_all(["th", "td"])]
             col_map = TuyensinhParser._map_table_columns(header_cells)
 
+            # Phát hiện tất cả các cột điểm và phương thức tương ứng trong hàng header
+            score_cols = []
+            for idx, h in enumerate(header_cells):
+                hl = h.lower().strip()
+                col_method = None
+                if any(k in hl for k in ["tsa", "đgtd"]):
+                    col_method = "Đánh giá tư duy Bách Khoa (TSA)"
+                elif any(k in hl for k in ["hsa"]):
+                    col_method = "Đánh giá năng lực ĐHQG Hà Nội (HSA)"
+                elif any(k in hl for k in ["v-act", "vact"]):
+                    col_method = "Đánh giá năng lực ĐHQG TP.HCM (V-ACT)"
+                elif any(k in hl for k in ["spt", "sp2e"]):
+                    col_method = "Đánh giá năng lực Sư phạm (SPT)"
+                elif any(k in hl for k in ["vsat", "v-sat"]):
+                    col_method = "Đánh giá đầu vào V-SAT"
+                elif any(k in hl for k in ["học bạ", "hb"]) and ("điểm" in hl or hl == "hb"):
+                    col_method = "Xét học bạ THPT"
+                elif any(k in hl for k in ["thpt", "ttn", "tốt nghiệp"]) and ("điểm" in hl or hl in ["thpt", "ttn"]):
+                    col_method = "Điểm thi tốt nghiệp THPT"
+                elif "chứng chỉ" in hl or "ccqt" in hl or "sat" in hl or "ielts" in hl:
+                    col_method = "Chứng chỉ quốc tế (IELTS/SAT/ACT)"
+                elif "điểm chuẩn" in hl or "điểm trúng tuyển" in hl or "điểm xét tuyển" in hl:
+                    col_method = raw_method
+                
+                if col_method:
+                    score_cols.append({"idx": idx, "method": col_method, "header": h})
+
+            # Nếu bảng có cả cột phương thức riêng cụ thể (VD: 'Điểm chuẩn ĐGNL HSA')
+            # và cột 'Điểm chuẩn' chung (thường là cột tham chiếu THPT của TS247),
+            # ưu tiên lấy cột phương thức cụ thể để tránh nhầm điểm
+            specific_cols = [sc for sc in score_cols if any(k in sc["header"].lower() for k in ["tsa", "hsa", "v-act", "spt", "học bạ", "thpt", "chứng chỉ"])]
+            generic_cols = [sc for sc in score_cols if sc["header"].lower() in ["điểm chuẩn", "điểm trúng tuyển", "điểm xét tuyển"]]
+            if specific_cols and generic_cols:
+                score_cols = specific_cols
+            elif not score_cols and "score" in col_map:
+                score_cols = [{"idx": col_map["score"], "method": raw_method, "header": header_cells[col_map["score"]] if col_map["score"] < len(header_cells) else ""}]
+
             # Duyệt từng dòng dữ liệu
             for row in rows[1:]:
                 cells = [c.text.strip().replace("\xa0", " ") for c in row.find_all(["th", "td"])]
@@ -217,7 +300,6 @@ class TuyensinhParser:
                 major_name = ""
                 major_code = ""
                 subject_group = ""
-                score_str = ""
                 notes = ""
                 quota = ""
 
@@ -229,9 +311,6 @@ class TuyensinhParser:
 
                 if "subject" in col_map and col_map["subject"] < len(cells):
                     subject_group = cells[col_map["subject"]]
-
-                if "score" in col_map and col_map["score"] < len(cells):
-                    score_str = cells[col_map["score"]]
 
                 if "notes" in col_map and col_map["notes"] < len(cells):
                     notes = cells[col_map["notes"]]
@@ -257,37 +336,47 @@ class TuyensinhParser:
                         major_code = code_in_name.group(1)
 
                 # Nếu cột ghi chú/kết hợp chứa phương thức chi tiết
-                row_method = raw_method
                 if "kết hợp" in col_map and col_map.get("kết hợp") and col_map["kết hợp"] < len(cells):
                     extra_method = cells[col_map["kết hợp"]]
                     if extra_method and len(extra_method) > 2:
                         notes = f"{notes}; {extra_method}".strip("; ")
 
-                # Chuyển đổi điểm số
-                numeric_score = TuyensinhParser._clean_score(score_str)
+                # Trích xuất điểm cho từng phương thức trong các cột điểm
+                for sc in score_cols:
+                    col_idx = sc["idx"]
+                    if col_idx >= len(cells):
+                        continue
+                    score_str = cells[col_idx].strip()
+                    if not score_str or score_str in ["-", "–", "N/A", ""]:
+                        continue
 
-                # Chuẩn hóa phương thức xét tuyển & tổ hợp môn (K00, Q00...)
-                norm_method, clean_subject = TuyensinhParser.normalize_method_and_subject(
-                    raw_method=row_method,
-                    raw_subject=subject_group,
-                    notes=notes,
-                    score=numeric_score,
-                    school_code=school_code
-                )
+                    # Chuyển đổi điểm số
+                    numeric_score = TuyensinhParser._clean_score(score_str)
+                    if numeric_score is None:
+                        continue
 
-                scores.append({
-                    "university_code": school_code,
-                    "university_name": school_name,
-                    "year": table_year,
-                    "method": norm_method,
-                    "major_code": major_code,
-                    "major_name": major_name,
-                    "subject_group": clean_subject,
-                    "cutoff_score": numeric_score,
-                    "cutoff_score_text": score_str if score_str else (str(numeric_score) if numeric_score is not None else ""),
-                    "notes": notes,
-                    "quota": quota
-                })
+                    # Chuẩn hóa phương thức xét tuyển & tổ hợp môn (K00, Q00...)
+                    norm_method, clean_subject = TuyensinhParser.normalize_method_and_subject(
+                        raw_method=sc["method"],
+                        raw_subject=subject_group,
+                        notes=notes,
+                        score=numeric_score,
+                        school_code=school_code
+                    )
+
+                    scores.append({
+                        "university_code": school_code,
+                        "university_name": school_name,
+                        "year": table_year,
+                        "method": norm_method,
+                        "major_code": major_code,
+                        "major_name": major_name,
+                        "subject_group": clean_subject,
+                        "cutoff_score": numeric_score,
+                        "cutoff_score_text": score_str,
+                        "notes": notes,
+                        "quota": quota
+                    })
 
         return scores
 
