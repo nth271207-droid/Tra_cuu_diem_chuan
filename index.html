@@ -53,19 +53,24 @@
     <!-- Main Container -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
 
-        <!-- NAVIGATION TABS: TÁCH RIÊNG THPT VÀ CÁC PHƯƠNG THỨC KHÁC -->
+        <!-- NAVIGATION TABS: TÁCH RIÊNG THPT VÀ CÁC PHƯƠNG THỨC KHÁC + AI HƯỚNG NGHIỆP -->
         <div class="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center gap-1.5">
-            <button id="tab-nav-thpt" class="flex-1 min-w-[240px] py-2.5 px-4 rounded-xl font-extrabold text-sm bg-blue-600 text-white shadow-sm flex items-center justify-center gap-2 transition-all">
+            <button id="tab-nav-thpt" class="flex-1 min-w-[200px] py-2.5 px-4 rounded-xl font-extrabold text-sm bg-blue-600 text-white shadow-sm flex items-center justify-center gap-2 transition-all">
                 <i class="fa-solid fa-award text-amber-300"></i>
-                <span>1. Xét Tuyển Điểm Thi THPT (Theo Tổ Hợp Môn)</span>
+                <span>1. Xét Tuyển Điểm Thi THPT</span>
             </button>
-            <button id="tab-nav-others" class="flex-1 min-w-[240px] py-2.5 px-4 rounded-xl font-bold text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center gap-2 transition-all">
+            <button id="tab-nav-others" class="flex-1 min-w-[200px] py-2.5 px-4 rounded-xl font-bold text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center gap-2 transition-all">
                 <i class="fa-solid fa-brain text-purple-600"></i>
-                <span>2. Các Phương Thức Xét Tuyển Khác (ĐGNL, ĐGTD, Học Bạ...)</span>
+                <span>2. Kỳ Thi Riêng (TSA, HSA...)</span>
+            </button>
+            <button id="tab-nav-career" class="flex-1 min-w-[220px] py-2.5 px-4 rounded-xl font-bold text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center gap-2 transition-all">
+                <i class="fa-solid fa-compass text-amber-500"></i>
+                <span>3. AI Hướng Nghiệp & Ngành Học</span>
+                <span class="px-1.5 py-0.5 text-[9px] font-extrabold bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-md tracking-wider">MỚI</span>
             </button>
             <button id="tab-nav-table" class="sm:w-auto py-2.5 px-4 rounded-xl font-bold text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center gap-2 transition-all">
                 <i class="fa-solid fa-table-list text-emerald-600"></i>
-                <span>3. Bảng Tra Cứu Toàn Bộ</span>
+                <span>4. Bảng Tra Cứu Toàn Bộ</span>
             </button>
         </div>
 
@@ -461,7 +466,72 @@
         </section>
 
         <!-- ========================================================================= -->
-        <!-- PHẦN 3: BẢNG TRA CỨU TOÀN BỘ (RAW TABLE VIEW) -->
+        <!-- PHẦN 3: AI HƯỚNG NGHIỆP & GỢI Ý NGÀNH HỌC (RIASEC / HOLLAND) -->
+        <!-- ========================================================================= -->
+        <section id="section-career" class="space-y-6 hidden">
+            <!-- HERO BOX AI CAREER -->
+            <div class="bg-gradient-to-br from-amber-600 via-orange-600 to-rose-700 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+                <div class="relative z-10 max-w-4xl space-y-3">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-xs font-semibold text-amber-100 border border-white/10">
+                        <i class="fa-solid fa-wand-magic-sparkles text-yellow-300"></i> Mô Hình Hướng Nghiệp Chuẩn Quốc Tế Holland (RIASEC)
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                        AI Hướng Nghiệp & Gợi Ý Ngành Học Phù Hợp Tính Cách
+                    </h2>
+                    <p class="text-xs sm:text-sm text-amber-100/90 leading-relaxed">
+                        Bạn băn khoăn "Mình hợp ngành gì? Điểm này nên nộp trường nào?". Chỉ với 6 câu hỏi trắc nghiệm nhanh, AI sẽ giải mã thiên hướng tính cách (Holland Code), thế mạnh môn học và tự động đối chiếu điểm chuẩn của hơn 299 trường đại học để gợi ý các ngành học và trường có cơ hội đỗ cao nhất cho bạn!
+                    </p>
+                </div>
+            </div>
+
+            <!-- CONTAINER TRẮC NGHIỆM -->
+            <div id="career-quiz-card" class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-8 space-y-6">
+                <!-- Thanh tiến trình & Tiêu đề câu hỏi -->
+                <div class="flex items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold text-lg">
+                            <i class="fa-solid fa-lightbulb"></i>
+                        </div>
+                        <div>
+                            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Trắc nghiệm nghề nghiệp</div>
+                            <div class="text-base font-extrabold text-slate-800" id="career-step-indicator">Câu hỏi 1 / 6</div>
+                        </div>
+                    </div>
+                    <div class="flex-1 max-w-xs hidden sm:block">
+                        <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                            <div id="career-progress-bar" class="bg-gradient-to-r from-amber-500 to-orange-500 h-2.5 rounded-full transition-all duration-300" style="width: 16.66%;"></div>
+                        </div>
+                    </div>
+                    <button id="btn-career-reset" class="text-xs font-bold text-slate-500 hover:text-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center gap-1.5 transition-all">
+                        <i class="fa-solid fa-rotate-left"></i> Làm lại
+                    </button>
+                </div>
+
+                <!-- Khu vực hiển thị câu hỏi động -->
+                <div id="career-question-view" class="space-y-4">
+                    <!-- Dynamic question content injected by app.js -->
+                </div>
+
+                <!-- Navigation buttons (Prev / Next) -->
+                <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                    <button id="btn-career-prev" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 flex items-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+                        <i class="fa-solid fa-arrow-left"></i> Câu trước
+                    </button>
+                    <button id="btn-career-next" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-extrabold text-sm shadow-md shadow-orange-500/20 flex items-center gap-2 transition-all">
+                        <span id="career-next-text">Câu tiếp theo</span>
+                        <i class="fa-solid fa-arrow-right" id="career-next-icon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- CONTAINER KẾT QUẢ PHÂN TÍCH AI (ẨN BAN ĐẦU) -->
+            <div id="career-results-card" class="space-y-6 hidden">
+                <!-- Dynamic AI results injected by app.js -->
+            </div>
+        </section>
+
+        <!-- ========================================================================= -->
+        <!-- PHẦN 4: BẢNG TRA CỨU TOÀN BỘ (RAW TABLE VIEW) -->
         <!-- ========================================================================= -->
         <section id="section-table" class="space-y-4 hidden">
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
