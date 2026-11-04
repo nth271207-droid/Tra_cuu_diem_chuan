@@ -75,11 +75,25 @@ document.addEventListener("DOMContentLoaded", () => {
     // DOM Elements - Navigation Tabs
     const tabNavThpt = document.getElementById("tab-nav-thpt");
     const tabNavOthers = document.getElementById("tab-nav-others");
+    const tabNavCareer = document.getElementById("tab-nav-career");
     const tabNavTable = document.getElementById("tab-nav-table");
 
     const sectionThpt = document.getElementById("section-thpt");
     const sectionOthers = document.getElementById("section-others");
+    const sectionCareer = document.getElementById("section-career");
     const sectionTable = document.getElementById("section-table");
+
+    // DOM Elements - Tab 3: AI Career Matcher (RIASEC)
+    const careerStepIndicator = document.getElementById("career-step-indicator");
+    const careerProgressBar = document.getElementById("career-progress-bar");
+    const careerQuestionView = document.getElementById("career-question-view");
+    const btnCareerPrev = document.getElementById("btn-career-prev");
+    const btnCareerNext = document.getElementById("btn-career-next");
+    const careerNextText = document.getElementById("career-next-text");
+    const careerNextIcon = document.getElementById("career-next-icon");
+    const btnCareerReset = document.getElementById("btn-career-reset");
+    const careerQuizCard = document.getElementById("career-quiz-card");
+    const careerResultsCard = document.getElementById("career-results-card");
 
     // DOM Elements - Tab 1: THPT
     const selectThptCombo = document.getElementById("select-thpt-combo");
@@ -149,35 +163,42 @@ document.addEventListener("DOMContentLoaded", () => {
     // 2. Navigation Tab Switcher
     function setActiveTab(tab) {
         // Reset classes
-        [tabNavThpt, tabNavOthers, tabNavTable].forEach(b => {
-            b.className = "flex-1 min-w-[220px] py-2.5 px-4 rounded-xl font-bold text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center gap-2 transition-all";
+        [tabNavThpt, tabNavOthers, tabNavCareer, tabNavTable].forEach(b => {
+            if (b) b.className = "flex-1 min-w-[200px] py-2.5 px-4 rounded-xl font-bold text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center gap-2 transition-all";
         });
-        [sectionThpt, sectionOthers, sectionTable].forEach(s => s.classList.add("hidden"));
+        [sectionThpt, sectionOthers, sectionCareer, sectionTable].forEach(s => {
+            if (s) s.classList.add("hidden");
+        });
 
         if (tab === "thpt") {
-            tabNavThpt.className = "flex-1 min-w-[220px] py-2.5 px-4 rounded-xl font-extrabold text-sm bg-blue-600 text-white shadow-sm flex items-center justify-center gap-2 transition-all";
-            sectionThpt.classList.remove("hidden");
+            if (tabNavThpt) tabNavThpt.className = "flex-1 min-w-[200px] py-2.5 px-4 rounded-xl font-extrabold text-sm bg-blue-600 text-white shadow-sm flex items-center justify-center gap-2 transition-all";
+            if (sectionThpt) sectionThpt.classList.remove("hidden");
             if (selectOtherUniversity && selectThptUniversity && selectOtherUniversity.value && !selectThptUniversity.value) {
                 selectThptUniversity.value = selectOtherUniversity.value;
             }
             handleThptAnalysis();
         } else if (tab === "others") {
-            tabNavOthers.className = "flex-1 min-w-[220px] py-2.5 px-4 rounded-xl font-extrabold text-sm bg-purple-600 text-white shadow-sm flex items-center justify-center gap-2 transition-all";
-            sectionOthers.classList.remove("hidden");
+            if (tabNavOthers) tabNavOthers.className = "flex-1 min-w-[200px] py-2.5 px-4 rounded-xl font-extrabold text-sm bg-purple-600 text-white shadow-sm flex items-center justify-center gap-2 transition-all";
+            if (sectionOthers) sectionOthers.classList.remove("hidden");
             if (selectThptUniversity && selectOtherUniversity && selectThptUniversity.value && !selectOtherUniversity.value) {
                 selectOtherUniversity.value = selectThptUniversity.value;
             }
             handleOthersAnalysis();
+        } else if (tab === "career") {
+            if (tabNavCareer) tabNavCareer.className = "flex-1 min-w-[220px] py-2.5 px-4 rounded-xl font-extrabold text-sm bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-sm flex items-center justify-center gap-2 transition-all";
+            if (sectionCareer) sectionCareer.classList.remove("hidden");
+            initCareerQuiz();
         } else if (tab === "table") {
-            tabNavTable.className = "sm:w-auto py-2.5 px-4 rounded-xl font-extrabold text-sm bg-emerald-600 text-white shadow-sm flex items-center justify-center gap-2 transition-all";
-            sectionTable.classList.remove("hidden");
+            if (tabNavTable) tabNavTable.className = "sm:w-auto py-2.5 px-4 rounded-xl font-extrabold text-sm bg-emerald-600 text-white shadow-sm flex items-center justify-center gap-2 transition-all";
+            if (sectionTable) sectionTable.classList.remove("hidden");
             fetchScores();
         }
     }
 
-    tabNavThpt.addEventListener("click", () => setActiveTab("thpt"));
-    tabNavOthers.addEventListener("click", () => setActiveTab("others"));
-    tabNavTable.addEventListener("click", () => setActiveTab("table"));
+    if (tabNavThpt) tabNavThpt.addEventListener("click", () => setActiveTab("thpt"));
+    if (tabNavOthers) tabNavOthers.addEventListener("click", () => setActiveTab("others"));
+    if (tabNavCareer) tabNavCareer.addEventListener("click", () => setActiveTab("career"));
+    if (tabNavTable) tabNavTable.addEventListener("click", () => setActiveTab("table"));
 
     // 3. Tab 1: THPT Event Listeners
     inputThptScore.addEventListener("input", () => {
@@ -1268,9 +1289,1406 @@ document.addEventListener("DOMContentLoaded", () => {
         return str;
     }
 
+    // =========================================================================
+    // 6. PHẦN 3: AI HƯỚNG NGHIỆP & GỢI Ý NGÀNH HỌC (RIASEC / HOLLAND)
+    // =========================================================================
+
+    const RIASEC_QUESTIONS = [
+        {
+            id: 1,
+            title: "Khi được tự do lựa chọn một hoạt động, bạn thích làm gì nhất?",
+            subtitle: "Khám phá xu hướng hành động và phong cách thực hiện công việc tự nhiên của bạn.",
+            type: "single",
+            options: [
+                {
+                    code: "R",
+                    icon: "fa-wrench",
+                    color: "amber",
+                    title: "Thực hành & Kỹ thuật",
+                    desc: "Thích sửa chữa đồ đạc, lắp ráp máy móc, thao tác với linh kiện điện tử, công cụ phần cứng hoặc vận hành thiết bị cơ khí."
+                },
+                {
+                    code: "I",
+                    icon: "fa-microchip",
+                    color: "blue",
+                    title: "Nghiên cứu & Logic",
+                    desc: "Thích lập trình, viết code, phân tích dữ liệu, tìm hiểu thuật toán, đọc tài liệu khoa học và tìm ra nguyên lý hoạt động của mọi thứ."
+                },
+                {
+                    code: "A",
+                    icon: "fa-palette",
+                    color: "rose",
+                    title: "Nghệ thuật & Sáng tạo",
+                    desc: "Thích thiết kế đồ họa, vẽ, làm video, viết lách, sáng tạo nội dung truyền thông, trang trí không gian hoặc thể hiện bản sắc cá nhân."
+                },
+                {
+                    code: "S",
+                    icon: "fa-hand-holding-heart",
+                    color: "emerald",
+                    title: "Xã hội & Giúp đỡ",
+                    desc: "Thích giao tiếp, lắng nghe, tư vấn tâm lý, dạy học, chăm sóc sức khỏe, kết nối mọi người và tham gia hoạt động vì cộng đồng."
+                },
+                {
+                    code: "E",
+                    icon: "fa-chart-line",
+                    color: "indigo",
+                    title: "Kinh doanh & Lãnh đạo",
+                    desc: "Thích khởi nghiệp, đàm phán, thuyết phục, bán hàng, quản lý đội nhóm, đầu tư tài chính và nắm bắt cơ hội thị trường."
+                },
+                {
+                    code: "C",
+                    icon: "fa-clipboard-check",
+                    color: "slate",
+                    title: "Quy củ & Nghiệp vụ",
+                    desc: "Thích làm việc với số liệu bảng tính, lập kế hoạch chi tiết, kiểm soát quy trình, sắp xếp hồ sơ chuẩn xác và công việc ổn định."
+                }
+            ]
+        },
+        {
+            id: 2,
+            title: "Những môn học nào bạn cảm thấy tự tin và có hứng thú nhất tại THPT?",
+            subtitle: "Chọn từ 1 đến 3 nhóm môn học thế mạnh nhất của bạn.",
+            type: "multi",
+            maxSelect: 3,
+            options: [
+                { code: "R", icon: "fa-gears", color: "amber", title: "Vật lý & Công nghệ", desc: "Định luật vật lý, điện từ học, quang học, máy móc cơ khí" },
+                { code: "I", icon: "fa-laptop-code", color: "blue", title: "Toán học & Tin học", desc: "Tư duy đại số, hình học không gian, lập trình thuật toán" },
+                { code: "I", icon: "fa-dna", color: "cyan", title: "Hóa học & Sinh học", desc: "Cơ chế sinh học, phản ứng hóa học, y dược và sự sống" },
+                { code: "A", icon: "fa-feather", color: "rose", title: "Ngữ văn & Mỹ thuật", desc: "Ngôn từ, cảm thụ tác phẩm, sáng tạo câu chuyện, thẩm mỹ" },
+                { code: "S", icon: "fa-earth-americas", color: "emerald", title: "Ngoại ngữ & Lịch sử/Địa lý", desc: "Tiếng Anh, văn hóa quốc tế, xã hội và nhân loại" },
+                { code: "E", icon: "fa-scale-balanced", color: "indigo", title: "Kinh tế & Pháp luật / GDCD", desc: "Quy luật thị trường, pháp luật, tài chính, tranh biện" }
+            ]
+        },
+        {
+            id: 3,
+            title: "Môi trường làm việc lý tưởng trong tương lai mà bạn khao khát?",
+            subtitle: "Không gian làm việc quyết định năng lượng và sự hứng khởi mỗi ngày của bạn.",
+            type: "single",
+            options: [
+                {
+                    code: "R",
+                    icon: "fa-industry",
+                    color: "amber",
+                    title: "Xưởng công nghệ & Hiện trường",
+                    desc: "Nhà máy thông minh, phân xưởng kỹ thuật, công trường xây dựng hiện đại, phòng kỹ thuật ô tô, hàng không."
+                },
+                {
+                    code: "I",
+                    icon: "fa-flask-vial",
+                    color: "blue",
+                    title: "Phòng Lab & Viện Công nghệ",
+                    desc: "Viện nghiên cứu, phòng thí nghiệm hiện đại, công ty phần mềm công nghệ cao, trung tâm dữ liệu AI."
+                },
+                {
+                    code: "A",
+                    icon: "fa-camera-retro",
+                    color: "rose",
+                    title: "Studio Sáng tạo & Tự do",
+                    desc: "Studio thiết kế, công ty truyền thông sáng tạo, tòa soạn, agency quảng cáo hoặc làm việc linh hoạt (Freelance)."
+                },
+                {
+                    code: "S",
+                    icon: "fa-school",
+                    color: "emerald",
+                    title: "Trường học, Bệnh viện & Cộng đồng",
+                    desc: "Giảng đường đại học, bệnh viện, cơ sở y tế, tổ chức phi chính phủ (NGO) tương tác gần gũi với con người."
+                },
+                {
+                    code: "E",
+                    icon: "fa-building",
+                    color: "indigo",
+                    title: "Tòa cao ốc Tập đoàn & Tài chính",
+                    desc: "Văn phòng cao ốc hiện đại tại các trung tâm tài chính, sàn giao dịch, môi trường kinh doanh quốc tế sôi động."
+                },
+                {
+                    code: "C",
+                    icon: "fa-landmark",
+                    color: "slate",
+                    title: "Cơ quan Quản lý, Ngân hàng & Kiểm toán",
+                    desc: "Ngân hàng lớn, công ty kiểm toán Big 4, cơ quan nhà nước với quy chuẩn bảo mật và hệ thống rõ ràng."
+                }
+            ]
+        },
+        {
+            id: 4,
+            title: "Khi gặp một vấn đề phức tạp hoặc thử thách khó, phản xạ đầu tiên của bạn là gì?",
+            subtitle: "Phương thức tư duy và phong cách giải quyết vấn đề phản ánh năng lực cốt lõi.",
+            type: "single",
+            options: [
+                {
+                    code: "R",
+                    icon: "fa-screwdriver-wrench",
+                    color: "amber",
+                    title: "Hành động thực tế & Khắc phục ngay",
+                    desc: "Trực tiếp kiểm tra từng bộ phận, thao tác thử nghiệm bằng tay để tìm điểm hỏng hóc và sửa chữa ngay."
+                },
+                {
+                    code: "I",
+                    icon: "fa-magnifying-glass-chart",
+                    color: "blue",
+                    title: "Phân tích nguyên nhân & Dữ liệu",
+                    desc: "Truy tìm nguyên nhân gốc rễ, tra cứu tài liệu học thuật, xây dựng mô hình logic và chứng minh bằng số liệu."
+                },
+                {
+                    code: "A",
+                    icon: "fa-wand-magic",
+                    color: "rose",
+                    title: "Tìm góc nhìn mới & Đột phá",
+                    desc: "Suy nghĩ 'ngoài chiếc hộp' (out-of-the-box), tìm cách tiếp cận mới lạ chưa ai từng thử để giải bài toán."
+                },
+                {
+                    code: "S",
+                    icon: "fa-comments",
+                    color: "emerald",
+                    title: "Thảo luận & Lắng nghe đồng đội",
+                    desc: "Tập hợp mọi người, lắng nghe các góc nhìn đa chiều, tạo sự đồng thuận và cùng nhau tìm hướng giải quyết."
+                },
+                {
+                    code: "E",
+                    icon: "fa-bolt",
+                    color: "indigo",
+                    title: "Quyết đoán & Dẫn dắt hành động",
+                    desc: "Nhanh chóng ra quyết định, phân chia nhiệm vụ cho từng người và truyền động lực để toàn đội tiến lên."
+                },
+                {
+                    code: "C",
+                    icon: "fa-list-check",
+                    color: "slate",
+                    title: "Kiểm tra quy trình & Checklist",
+                    desc: "Rà soát lại quy trình chuẩn, đối chiếu checklist từng bước để đảm bảo không xảy ra sai sót thêm."
+                }
+            ]
+        },
+        {
+            id: 5,
+            title: "Giá trị nghề nghiệp nào mang lại cho bạn cảm giác tự hào và hạnh phúc nhất?",
+            subtitle: "Động lực nội tại giúp bạn kiên trì và phát triển bền vững trong sự nghiệp.",
+            type: "single",
+            options: [
+                {
+                    code: "R",
+                    icon: "fa-cube",
+                    color: "amber",
+                    title: "Sản phẩm hữu hình thực tế",
+                    desc: "Nhìn thấy công trình, cỗ máy hay sản phẩm vật lý do chính mình chế tạo vận hành trơn tru trong đời sống."
+                },
+                {
+                    code: "I",
+                    icon: "fa-atom",
+                    color: "blue",
+                    title: "Chuyên môn sâu & Đổi mới công nghệ",
+                    desc: "Được công nhận là chuyên gia xuất sắc, phát triển giải pháp công nghệ cao giải quyết những bài toán lớn."
+                },
+                {
+                    code: "A",
+                    icon: "fa-gem",
+                    color: "rose",
+                    title: "Tự do sáng tạo & Bản sắc cá nhân",
+                    desc: "Tự do thể hiện cá tính riêng, tạo ra những tác phẩm có tính thẩm mỹ và lay động cảm xúc công chúng."
+                },
+                {
+                    code: "S",
+                    icon: "fa-heart-circle-check",
+                    color: "emerald",
+                    title: "Cống hiến & Giúp đỡ con người",
+                    desc: "Thấy người khác tiến bộ, khỏe mạnh hơn nhờ sự hỗ trợ của mình, đóng góp tích cực cho xã hội."
+                },
+                {
+                    code: "E",
+                    icon: "fa-trophy",
+                    color: "indigo",
+                    title: "Thành công tài chính & Tầm ảnh hưởng",
+                    desc: "Mức thu nhập hấp dẫn, vị thế lãnh đạo, mở rộng quy mô kinh doanh và có sức ảnh hưởng lớn."
+                },
+                {
+                    code: "C",
+                    icon: "fa-shield-halved",
+                    color: "slate",
+                    title: "Sự ổn định, Chuẩn mực & An toàn",
+                    desc: "Công việc có lộ trình rõ ràng, ít biến động rủi ro, môi trường minh bạch, chuẩn mực và phúc lợi đảm bảo."
+                }
+            ]
+        },
+        {
+            id: 6,
+            title: "Hồ sơ xét tuyển & Định hướng thực tế của bạn",
+            subtitle: "Điền mức điểm và khu vực ưu tiên để AI tự động đối chiếu điểm chuẩn thực tế từ 299 trường đại học.",
+            type: "profile"
+        }
+    ];
+
+    const HOLLAND_ARCHETYPES = {
+        "IR": {
+            code: "IR",
+            title: "Nhà Đổi Mới Công Nghệ & Kỹ Thuật Số",
+            subtitle: "Thiên hướng kết hợp giữa tư duy phân tích sâu (Investigative) và khả năng ứng dụng thực tế (Realistic).",
+            color: "blue",
+            strengths: [
+                "Tư duy logic thuật toán nhạy bén, khả năng tự học công nghệ mới nhanh chóng.",
+                "Giải quyết bài toán kỹ thuật từ nguyên lý gốc rễ, kiên trì gỡ lỗi (debug).",
+                "Chuyển hóa lý thuyết phức tạp thành hệ thống phần mềm, vi mạch hay máy móc hoạt động thực tế."
+            ],
+            environment: "Các viện nghiên cứu, tập đoàn công nghệ hàng đầu, công ty AI/Phần mềm, phòng Lab vi mạch bán dẫn.",
+            majors: [
+                {
+                    name: "Công nghệ Thông tin & Trí tuệ Nhân tạo (AI)",
+                    match: 97,
+                    reason: "Đỉnh cao của tư duy logic và công nghệ tương lai, cơ hội việc làm và thu nhập toàn cầu.",
+                    careers: "Kỹ sư AI, Lập trình viên Phần mềm, Chuyên gia Dữ liệu lớn (Big Data).",
+                    keywords: ["công nghệ thông tin", "trí tuệ nhân tạo", "khoa học máy tính", "khoa học dữ liệu", "kỹ thuật phần mềm", "an toàn thông tin", "mạng máy tính"]
+                },
+                {
+                    name: "Kỹ thuật Vi mạch, Bán dẫn & Điện tử",
+                    match: 94,
+                    reason: "Ngành mũi nhọn quốc gia với nhu cầu nhân lực chất lượng cao bùng nổ.",
+                    careers: "Kỹ sư thiết kế vi mạch, Kỹ sư đóng gói chip, Chuyên gia bán dẫn.",
+                    keywords: ["bán dẫn", "vi mạch", "điện tử viễn thông", "kỹ thuật máy tính"]
+                },
+                {
+                    name: "Kỹ thuật Điều khiển, Tự động hóa & Robot",
+                    match: 92,
+                    reason: "Kết hợp cơ điện tử, cánh tay robot và dây chuyền tự động hóa công nghiệp 4.0.",
+                    careers: "Kỹ sư Tự động hóa, Kỹ sư Lập trình Robot, Giám sát hệ thống thông minh.",
+                    keywords: ["điều khiển", "tự động hóa", "cơ điện tử", "robot"]
+                },
+                {
+                    name: "Kỹ thuật Cơ khí & Công nghệ Ô tô",
+                    match: 88,
+                    reason: "Chế tạo xe điện thông minh, máy bay, thiết bị cơ khí chính xác hiện đại.",
+                    careers: "Kỹ sư Ô tô điện, Thiết kế cơ khí CAD/CAM, Vận hành bảo trì hàng không.",
+                    keywords: ["cơ khí", "ô tô", "chế tạo máy", "kỹ thuật nhiệt", "hàng không"]
+                }
+            ]
+        },
+        "RI": {
+            code: "RI",
+            title: "Kỹ Sư Công Nghệ Ứng Dụng & Cơ Khí Thông Minh",
+            subtitle: "Đam mê sáng chế, chế tạo máy móc với nền tảng khoa học vững chắc.",
+            color: "amber",
+            strengths: [
+                "Năng khiếu thao tác máy móc, thiết bị và công cụ kỹ thuật chính xác.",
+                "Khả năng đọc hiểu bản vẽ kỹ thuật, mô phỏng 3D và hiện thực hóa ý tưởng.",
+                "Sức bền, tính kiên nhẫn và tinh thần thực tiễn cao trong công việc."
+            ],
+            environment: "Nhà máy sản xuất thông minh, trung tâm R&D cơ điện tử, các dự án công nghệ ô tô và năng lượng.",
+            majors: [
+                {
+                    name: "Công nghệ Kỹ thuật Ô tô & Xe Điện",
+                    match: 96,
+                    reason: "Lĩnh vực giao thông thông minh đang chuyển mình mạnh mẽ với xe tự hành và pin năng lượng.",
+                    careers: "Kỹ sư thiết kế ô tô, Kỹ sư hệ thống pin xe điện, Quản lý sản xuất xe.",
+                    keywords: ["ô tô", "cơ khí", "chế tạo máy"]
+                },
+                {
+                    name: "Kỹ thuật Cơ điện tử & Hệ thống Robot",
+                    match: 93,
+                    reason: "Giao thoa giữa cơ khí chính xác, mạch điện tử và phần mềm nhúng điều khiển.",
+                    careers: "Kỹ sư Cơ điện tử, Kỹ sư điều khiển robot công nghiệp, Kỹ sư IoT.",
+                    keywords: ["cơ điện tử", "robot", "tự động hóa"]
+                },
+                {
+                    name: "Kỹ thuật Điện - Điện tử & Năng lượng mới",
+                    match: 89,
+                    reason: "Nền tảng của toàn bộ hạ tầng công nghiệp và xu hướng năng lượng xanh tái tạo.",
+                    careers: "Kỹ sư điện lưới thông minh, Chuyên viên năng lượng mặt trời/gió.",
+                    keywords: ["điện", "điện tử", "năng lượng", "viễn thông"]
+                },
+                {
+                    name: "Kỹ thuật Xây dựng & Công trình Giao thông",
+                    match: 85,
+                    reason: "Tạo nên các công trình cao tầng, cầu đường huyết mạch và hạ tầng đô thị hiện đại.",
+                    careers: "Kỹ sư kết cấu xây dựng, Chỉ huy trưởng công trình, Giám sát dự án.",
+                    keywords: ["xây dựng", "cầu đường", "giao thông", "hạ tầng"]
+                }
+            ]
+        },
+        "IE": {
+            code: "IE",
+            title: "Nhà Chiến Lược Dữ Liệu & Kinh Doanh Số",
+            subtitle: "Sự kết hợp hoàn hảo giữa tư duy toán học logic và tầm nhìn kinh doanh nhạy bén.",
+            color: "indigo",
+            strengths: [
+                "Biến số liệu khô khan thành chiến lược kinh doanh và quyết định tài chính sắc bén.",
+                "Thấu hiểu cả hai ngôn ngữ: Ngôn ngữ kỹ thuật số của lập trình viên và ngôn ngữ thị trường của CEO.",
+                "Nắm bắt nhanh các mô hình kinh doanh số, sàn thương mại điện tử và tài chính công nghệ."
+            ],
+            environment: "Fintech, ngân hàng số, tập đoàn thương mại điện tử, công ty tư vấn chiến lược kinh doanh.",
+            majors: [
+                {
+                    name: "Hệ thống Thông tin Quản lý & Khoa học Dữ liệu",
+                    match: 96,
+                    reason: "Cầu nối sống còn giữa phòng kỹ thuật phần mềm và ban giám đốc chiến lược.",
+                    careers: "Business Analyst (BA), Data Scientist, Quản lý dự án CNTT (IT PM).",
+                    keywords: ["hệ thống thông tin", "khoa học dữ liệu", "phân tích dữ liệu", "kinh doanh số"]
+                },
+                {
+                    name: "Công nghệ Tài chính (Fintech) & Ngân hàng Số",
+                    match: 94,
+                    reason: "Thanh toán không tiền mặt, blockchain, chấm điểm tín dụng AI và đầu tư thuật toán.",
+                    careers: "Chuyên viên Fintech, Quản lý rủi ro thuật toán, Chuyên gia ngân hàng số.",
+                    keywords: ["công nghệ tài chính", "tài chính", "ngân hàng"]
+                },
+                {
+                    name: "Logistics & Quản lý Chuỗi Cung Ứng",
+                    match: 91,
+                    reason: "Mạch máu của thương mại toàn cầu, tối ưu hóa tuyến đường vận chuyển bằng dữ liệu.",
+                    careers: "Chuyên viên phân tích chuỗi cung ứng, Quản lý vận tải quốc tế, Chuyên viên kho bãi thông minh.",
+                    keywords: ["logistics", "chuỗi cung ứng", "kinh tế vận tải"]
+                },
+                {
+                    name: "Thương mại Điện tử & Kinh doanh Quốc tế",
+                    match: 88,
+                    reason: "Vận hành các nền tảng thương mại đa kênh, xuất nhập khẩu số xuyên biên giới.",
+                    careers: "Quản trị sàn E-commerce, Chuyên viên xuất nhập khẩu số, Giám đốc tăng trưởng (Growth).",
+                    keywords: ["thương mại điện tử", "kinh doanh quốc tế", "kinh tế đối ngoại"]
+                }
+            ]
+        },
+        "EI": {
+            code: "EI",
+            title: "Nhà Lãnh Đạo Công Nghệ & Khởi Nghiệp Đổi Mới",
+            subtitle: "Tham vọng dẫn đầu thị trường bằng những giải pháp và sản phẩm công nghệ đột phá.",
+            color: "indigo",
+            strengths: [
+                "Khả năng nhận diện khoảng trống thị trường và nhanh chóng huy động nguồn lực triển khai.",
+                "Kỹ năng thuyết trình, kêu gọi vốn và truyền cảm hứng cho đội ngũ nhân sự.",
+                "Tư duy ra quyết định dựa trên dữ liệu (Data-driven decision making)."
+            ],
+            environment: "Startup công nghệ, quỹ đầu tư mạo hiểm (VC), tập đoàn đa quốc gia đổi mới sáng tạo.",
+            majors: [
+                {
+                    name: "Quản trị Kinh doanh & Khởi nghiệp Sáng tạo",
+                    match: 95,
+                    reason: "Đào tạo tư duy lãnh đạo toàn diện, xây dựng và vận hành doanh nghiệp từ con số 0.",
+                    careers: "CEO/Founder startup, Giám đốc phát triển kinh doanh, Trợ lý tổng giám đốc.",
+                    keywords: ["quản trị kinh doanh", "khởi nghiệp", "kinh doanh quốc tế"]
+                },
+                {
+                    name: "Thương mại Điện tử & Kinh tế Số",
+                    match: 93,
+                    reason: "Thị trường nghìn tỷ đang định hình lại toàn bộ nền kinh tế tiêu dùng.",
+                    careers: "Giám đốc kinh doanh số, Quản lý đối tác chiến lược công nghệ.",
+                    keywords: ["thương mại điện tử", "kinh tế số", "kinh doanh số"]
+                },
+                {
+                    name: "Marketing & Truyền thông Tích hợp (IMC)",
+                    match: 90,
+                    reason: "Nắm bắt tâm lý hành vi người tiêu dùng và xây dựng chiến dịch bán hàng bùng nổ.",
+                    careers: "Giám đốc Marketing (CMO), Brand Manager, Performance Marketer.",
+                    keywords: ["marketing", "quảng cáo", "truyền thông marketing"]
+                },
+                {
+                    name: "Kinh doanh Quốc tế & Kinh tế Đối ngoại",
+                    match: 87,
+                    reason: "Giao thương thương mại toàn cầu, đàm phán hợp đồng thương mại quốc tế.",
+                    careers: "Chuyên viên đàm phán quốc tế, Chuyên viên xúc tiến thương mại.",
+                    keywords: ["kinh doanh quốc tế", "kinh tế quốc tế", "kinh tế đối ngoại"]
+                }
+            ]
+        },
+        "EC": {
+            code: "EC",
+            title: "Nhà Quản Lý Tài Chính & Doanh Nghiệp Chuẩn Mực",
+            subtitle: "Sự kết hợp giữa nhạy bén kinh doanh và tính kỷ luật, chuẩn xác cao về quy trình tài chính.",
+            color: "emerald",
+            strengths: [
+                "Khả năng kiểm soát ngân sách, dòng tiền và phân bổ vốn chặt chẽ.",
+                "Hiểu sâu về luật thuế, chính sách tài khóa và chuẩn mực báo cáo tài chính.",
+                "Tác phong làm việc chuẩn mực, bảo mật và đáng tin cậy cao độ."
+            ],
+            environment: "Ngân hàng thương mại, các công ty kiểm toán Big 4, phòng tài chính doanh nghiệp lớn.",
+            majors: [
+                {
+                    name: "Tài chính - Ngân hàng & Đầu tư Tài sản",
+                    match: 97,
+                    reason: "Trụ cột huyết mạch của nền kinh tế, quản lý vốn và gia tăng lợi nhuận đầu tư.",
+                    careers: "Chuyên viên phân tích đầu tư, Chuyên viên tín dụng ngân hàng, Chuyên gia quản trị tài sản.",
+                    keywords: ["tài chính", "ngân hàng", "đầu tư", "chứng khoán"]
+                },
+                {
+                    name: "Kế toán & Kiểm toán Chuẩn mực Quốc tế (ACCA/CPA)",
+                    match: 94,
+                    reason: "Ngôn ngữ của kinh doanh, bảo đảm tính minh bạch và an toàn tài chính tuyệt đối.",
+                    careers: "Kiểm toán viên Big 4, Kế toán trưởng, Chuyên viên tư vấn thuế.",
+                    keywords: ["kế toán", "kiểm toán"]
+                },
+                {
+                    name: "Luật Kinh tế & Pháp chế Doanh nghiệp",
+                    match: 91,
+                    reason: "Lá chắn pháp lý bảo vệ doanh nghiệp trong các thương vụ M&A và tranh chấp hợp đồng.",
+                    careers: "Luật sư kinh tế, Giám đốc pháp chế (Head of Legal), Trọng tài thương mại.",
+                    keywords: ["luật kinh tế", "luật thương mại", "luật"]
+                },
+                {
+                    name: "Quản trị Doanh nghiệp & Quản trị Rủi ro",
+                    match: 88,
+                    reason: "Xây dựng quy trình vận hành tối ưu, phòng chống gian lận và rủi ro thị trường.",
+                    careers: "Risk Manager, Chuyên viên kiểm soát nội bộ, Trợ lý vận hành.",
+                    keywords: ["quản trị kinh doanh", "quản lý công", "quản trị nhân lực"]
+                }
+            ]
+        },
+        "CE": {
+            code: "CE",
+            title: "Chuyên Gia Thẩm Định Tài Chính & Kiểm Soát Rủi Ro",
+            subtitle: "Chuẩn xác, tỉ mỉ trong từng con số với tư duy kinh tế sắc bén.",
+            color: "slate",
+            strengths: [
+                "Khả năng phát hiện sai sót, lỗ hổng số liệu cực kỳ tinh tế.",
+                "Kỷ luật tuân thủ cao, tôn trọng nguyên tắc và đạo đức nghề nghiệp.",
+                "Phân tích báo cáo tài chính và thẩm định phương án kinh doanh chi tiết."
+            ],
+            environment: "Hãng kiểm toán, cơ quan quản lý thị trường, ban kiểm soát tập đoàn, cục thuế.",
+            majors: [
+                {
+                    name: "Kiểm toán & Kế toán Quản trị",
+                    match: 96,
+                    reason: "Nghề nghiệp đòi hỏi tính chuẩn mực, chính xác cao và lộ trình thăng tiến rõ ràng.",
+                    careers: "Kiểm toán viên độc lập, Kiểm toán nội bộ, Kế toán trưởng.",
+                    keywords: ["kiểm toán", "kế toán"]
+                },
+                {
+                    name: "Tài chính Doanh nghiệp & Thẩm định Giá",
+                    match: 93,
+                    reason: "Định giá dự án, định giá tài sản doanh nghiệp trước các thương vụ đầu tư lớn.",
+                    careers: "Thẩm định viên tài chính, Chuyên viên định giá M&A, Quản trị vốn.",
+                    keywords: ["tài chính", "ngân hàng", "đầu tư"]
+                },
+                {
+                    name: "Hệ thống Thông tin Kế toán & Phân tích Tài chính",
+                    match: 89,
+                    reason: "Ứng dụng ERP (SAP, Oracle) trong việc quản lý dữ liệu tài chính kế toán tự động.",
+                    careers: "Chuyên viên ERP Tài chính, Chuyên viên đối soát dữ liệu ngân hàng.",
+                    keywords: ["hệ thống thông tin", "kế toán", "tài chính"]
+                },
+                {
+                    name: "Quản trị Văn phòng & Quản lý Hành chính Công",
+                    match: 86,
+                    reason: "Vận hành hệ thống tài liệu, quy chế nội bộ và hành chính văn thư bài bản.",
+                    careers: "Chánh văn phòng, Quản lý hồ sơ pháp lý, Thư ký ban giám đốc.",
+                    keywords: ["quản trị văn phòng", "hành chính", "quản lý công", "văn thư"]
+                }
+            ]
+        },
+        "EA": {
+            code: "EA",
+            title: "Nhà Sáng Tạo Thương Hiệu & Truyền Thông Marketing",
+            subtitle: "Sự thăng hoa giữa ý tưởng nghệ thuật khác biệt và mục tiêu thương mại thực tế.",
+            color: "rose",
+            strengths: [
+                "Nắm bắt trào lưu văn hóa (trend) nhanh nhạy, biến ý tưởng thành chiến dịch lan tỏa.",
+                "Khả năng thấu cảm cảm xúc khách hàng và xây dựng câu chuyện thương hiệu (Storytelling).",
+                "Kỹ năng thuyết phục khách hàng và đàm phán hợp đồng tài trợ, quảng bá."
+            ],
+            environment: "Creative Agency, phòng Marketing tập đoàn, công ty tổ chức sự kiện, thương hiệu thời trang.",
+            majors: [
+                {
+                    name: "Marketing Số & Quản trị Thương hiệu",
+                    match: 97,
+                    reason: "Ngành nghề hot hàng đầu cho các bạn trẻ thích sáng tạo và kiếm tìm thu nhập cao.",
+                    careers: "Brand Manager, Creative Director, Giám đốc chiến dịch quảng cáo.",
+                    keywords: ["marketing", "quảng cáo", "truyền thông marketing", "thương hiệu"]
+                },
+                {
+                    name: "Quan hệ Công chúng (PR) & Quản trị Sự kiện",
+                    match: 94,
+                    reason: "Xây dựng hình ảnh cá nhân/tổ chức, quản trị khủng hoảng và tổ chức sự kiện quy mô lớn.",
+                    careers: "Chuyên viên PR, Nhà sản xuất sự kiện (Event Producer), Người phát ngôn.",
+                    keywords: ["quan hệ công chúng", "sự kiện", "quảng bá", "truyền thông"]
+                },
+                {
+                    name: "Quản trị Khách sạn, Nhà hàng & Du lịch Quốc tế",
+                    match: 90,
+                    reason: "Ngành công nghiệp không khói sôi động, kết nối văn hóa và dịch vụ thượng lưu.",
+                    careers: "Quản lý khách sạn 5 sao, Chuyên gia trải nghiệm khách hàng, Quản lý resort.",
+                    keywords: ["du lịch", "khách sạn", "nhà hàng", "lữ hành"]
+                },
+                {
+                    name: "Kiến trúc & Thiết kế Nội thất",
+                    match: 87,
+                    reason: "Kiến tạo không gian sống tiện nghi, thẩm mỹ cao kết hợp kinh doanh bất động sản.",
+                    careers: "Kiến trúc sư, Nhà thiết kế nội thất, Giám đốc sáng tạo không gian.",
+                    keywords: ["kiến trúc", "nội thất", "quy hoạch", "thiết kế"]
+                }
+            ]
+        },
+        "AS": {
+            code: "AS",
+            title: "Nhà Báo, Nhà Truyền Thông & Sáng Tạo Xã Hội",
+            subtitle: "Dùng ngòi bút, hình ảnh và câu chuyện nhân văn để kết nối và truyền cảm hứng cộng đồng.",
+            color: "rose",
+            strengths: [
+                "Ngôn từ giàu cảm xúc, khả năng biểu đạt ý niệm phức tạp qua hình ảnh, video.",
+                "Tâm hồn nhạy cảm, thấu hiểu nỗi đau và tâm lý sâu kín của con người.",
+                "Yêu thích sự tự do, tôn trọng sự đa dạng văn hóa và không chịu gò bó lối mòn."
+            ],
+            environment: "Tòa soạn báo, đài truyền hình, kênh truyền thông số, tổ chức văn hóa, nhà xuất bản.",
+            majors: [
+                {
+                    name: "Truyền thông Đa phương tiện & Thiết kế Đồ họa",
+                    match: 96,
+                    reason: "Sáng tạo visual, video viral, podcast và giao diện đồ họa sống động cho thế hệ số.",
+                    careers: "Graphic Designer, Video Editor, Content Creator, Chuyên viên truyền thông số.",
+                    keywords: ["truyền thông đa phương tiện", "thiết kế đồ họa", "mỹ thuật", "hoạt hình", "game"]
+                },
+                {
+                    name: "Báo chí, Xuất bản & Viết lách Chuyên nghiệp",
+                    match: 93,
+                    reason: "Tiếng nói của xã hội, phản ánh sự thật và kiến tạo các tác phẩm văn hóa giá trị.",
+                    careers: "Nhà báo, Phóng viên điều tra, Biên tập viên xuất bản, Biên kịch phim.",
+                    keywords: ["báo chí", "xuất bản", "văn học", "truyền hình"]
+                },
+                {
+                    name: "Ngôn ngữ Anh & Biên phiên dịch Quốc tế",
+                    match: 91,
+                    reason: "Chìa khóa hội nhập toàn cầu, cầu nối chuyển ngữ văn hóa và kinh tế.",
+                    careers: "Biên phiên dịch viên cấp cao, Điều phối viên quốc tế, Giảng viên ngôn ngữ.",
+                    keywords: ["ngôn ngữ anh", "ngôn ngữ trung", "ngôn ngữ hàn", "ngôn ngữ nhật", "tiếng anh"]
+                },
+                {
+                    name: "Tâm lý học Ứng dụng & Công tác Xã hội",
+                    match: 88,
+                    reason: "Trị liệu tâm lý, chữa lành tinh thần và hỗ trợ các nhóm yếu thế trong cộng đồng.",
+                    careers: "Chuyên gia tham vấn tâm lý học đường, Nhân viên công tác xã hội, Chuyên viên trị liệu.",
+                    keywords: ["tâm lý học", "công tác xã hội", "xã hội học"]
+                }
+            ]
+        },
+        "IS": {
+            code: "IS",
+            title: "Bác Sĩ, Dược Sĩ & Chuyên Gia Y Khoa",
+            subtitle: "Sự kết hợp cao quý giữa trí tuệ khoa học nghiêm ngặt và trái tim nhân ái vì mạng sống con người.",
+            color: "cyan",
+            strengths: [
+                "Khả năng học tập nghiên cứu cường độ cao, ghi nhớ và tổng hợp lượng kiến thức y sinh đồ sộ.",
+                "Đức tính cẩn trọng, tỉ mỉ, bình tĩnh trước áp lực và tình huống khẩn cấp.",
+                "Lòng trắc ẩn sâu sắc, tinh thần trách nhiệm y đức bảo vệ sức khỏe nhân dân."
+            ],
+            environment: "Bệnh viện tuyến đầu, viện nghiên cứu vắc-xin/dược phẩm, các trường đại học y dược.",
+            majors: [
+                {
+                    name: "Y Đa khoa & Bác sĩ Chuyên khoa",
+                    match: 98,
+                    reason: "Nghề nghiệp danh giá bậc nhất, trực tiếp chẩn đoán và điều trị cứu sống con người.",
+                    careers: "Bác sĩ Nội trú, Bác sĩ Phẫu thuật, Trưởng khoa Bệnh viện.",
+                    keywords: ["y đa khoa", "y khoa", "bác sĩ", "răng hàm mặt", "y học cổ truyền"]
+                },
+                {
+                    name: "Dược học & Công nghệ Sinh học Dược",
+                    match: 95,
+                    reason: "Nghiên cứu, bào chế thuốc chữa bệnh, dược liệu và sản phẩm chăm sóc sức khỏe.",
+                    careers: "Dược sĩ lâm sàng, Chuyên viên R&D dược phẩm, Quản lý nhà máy sản xuất thuốc.",
+                    keywords: ["dược", "dược học", "hóa dược", "công nghệ sinh học"]
+                },
+                {
+                    name: "Răng - Hàm - Mặt & Thẩm mỹ Y khoa",
+                    match: 92,
+                    reason: "Chăm sóc nụ cười và sức khỏe răng miệng với thu nhập và cơ hội mở phòng khám riêng cao.",
+                    careers: "Bác sĩ Răng Hàm Mặt, Chuyên gia chỉnh nha, Bác sĩ thẩm mỹ nụ cười.",
+                    keywords: ["răng hàm mặt", "nha khoa"]
+                },
+                {
+                    name: "Điều dưỡng & Kỹ thuật Xét nghiệm Y học",
+                    match: 89,
+                    reason: "Đóng vai trò then chốt trong chăm sóc bệnh nhân và hỗ trợ chẩn đoán hình ảnh chính xác.",
+                    careers: "Điều dưỡng trưởng, Kỹ thuật viên xét nghiệm máu/vi sinh, Chuyên viên thiết bị y tế.",
+                    keywords: ["điều dưỡng", "kỹ thuật y học", "xét nghiệm", "y tế công cộng"]
+                }
+            ]
+        },
+        "SE": {
+            code: "SE",
+            title: "Nhà Lãnh Đạo Xã Hội, Giáo Dục & Luật Pháp",
+            subtitle: "Đam mê xây dựng xã hội công bằng, đào tạo thế hệ tương lai và quản lý cộng đồng.",
+            color: "emerald",
+            strengths: [
+                "Khả năng diễn đạt hùng biện, bảo vệ lẽ phải và công lý.",
+                "Kỹ năng kết nối mạng lưới con người, hòa giải xung đột và lãnh đạo tập thể.",
+                "Tận tụy, kiên nhẫn trong việc giáo dục, đào tạo và phát triển năng lực người khác."
+            ],
+            environment: "Tòa án, văn phòng luật sư, trường đại học, cơ quan quản lý giáo dục, tổ chức ngoại giao.",
+            majors: [
+                {
+                    name: "Luật học & Pháp luật Thương mại",
+                    match: 96,
+                    reason: "Bảo vệ cán cân công lý, tư vấn pháp lý cho các thể chế và doanh nghiệp.",
+                    careers: "Luật sư tranh tụng, Thẩm phán, Kiểm sát viên, Công chứng viên.",
+                    keywords: ["luật", "luật học", "quan hệ quốc tế"]
+                },
+                {
+                    name: "Sư phạm & Quản lý Giáo dục",
+                    match: 94,
+                    reason: "Khuôn vàng thước ngọc đào tạo nhân tài cho đất nước, việc làm bền vững.",
+                    careers: "Giáo viên trường THPT chất lượng cao, Giảng viên đại học, Quản lý trường học.",
+                    keywords: ["sư phạm", "giáo dục", "sư phạm toán", "sư phạm ngữ văn", "sư phạm tiếng anh"]
+                },
+                {
+                    name: "Quản trị Nhân lực & Phát triển Tổ chức",
+                    match: 91,
+                    reason: "Tìm kiếm, tuyển dụng và bồi dưỡng nhân tài - tài sản quý giá nhất của mọi công ty.",
+                    careers: "HR Manager, Chuyên gia tuyển dụng cấp cao (Headhunter), Chuyên viên đào tạo nội bộ.",
+                    keywords: ["quản trị nhân lực", "nhân sự", "tâm lý học"]
+                },
+                {
+                    name: "Ngoại giao & Quốc tế học",
+                    match: 88,
+                    reason: "Đại diện quốc gia trên trường quốc tế, thúc đẩy hợp tác chính trị - kinh tế.",
+                    careers: "Nhà ngoại giao, Chuyên viên bộ ngoại giao, Điều phối viên dự án quốc tế.",
+                    keywords: ["ngoại giao", "quốc tế học", "đông phương học"]
+                }
+            ]
+        },
+        "RC": {
+            code: "RC",
+            title: "Kỹ Sư Công Trình, Vận Hành & Giám Sát Kỹ Thuật",
+            subtitle: "Đảm bảo sự an toàn tuyệt đối, độ chính xác cao của các công trình và hạ tầng quốc gia.",
+            color: "slate",
+            strengths: [
+                "Tuân thủ nghiêm ngặt tiêu chuẩn an toàn lao động và quy chuẩn kỹ thuật xây dựng.",
+                "Khả năng giám sát thi công, nghiệm thu chất lượng công trình và đo đạc thực địa.",
+                "Tác phong thực tế, kiên định, chịu được áp lực tiến độ tại công trường."
+            ],
+            environment: "Ban quản lý dự án xây dựng, cơ quan kiểm định chất lượng, tổng công ty hạ tầng giao thông.",
+            majors: [
+                {
+                    name: "Kỹ thuật Xây dựng & Công trình Thủy lợi - Giao thông",
+                    match: 96,
+                    reason: "Xây đắp các cây cầu thế kỷ, hầm vượt biển, đập thủy điện và sân bay huyết mạch.",
+                    careers: "Kỹ sư giám sát thi công, Chỉ huy trưởng công trường, Kỹ sư trắc địa công trình.",
+                    keywords: ["xây dựng", "cầu đường", "giao thông", "hạ tầng", "công trình thủy"]
+                },
+                {
+                    name: "Quản lý Đất đai & Trắc địa - Bản đồ",
+                    match: 92,
+                    reason: "Đo đạc vệ tinh, quy hoạch sử dụng đất và cấp giấy chứng nhận bất động sản.",
+                    careers: "Kỹ sư trắc địa viễn thám, Chuyên viên phòng tài nguyên môi trường, Quy hoạch đất đai.",
+                    keywords: ["đất đai", "trắc địa", "bản đồ", "địa chính", "môi trường"]
+                },
+                {
+                    name: "Kỹ thuật Hàng hải & Khoa học Hàng hải",
+                    match: 89,
+                    reason: "Chỉ huy những con tàu viễn dương vượt sóng lớn đưa hàng hóa đi khắp năm châu.",
+                    careers: "Thuyền trưởng tàu biển, Sĩ quan hàng hải, Kỹ sư máy tàu biển.",
+                    keywords: ["hàng hải", "tàu thủy", "điều khiển tàu"]
+                },
+                {
+                    name: "Nông nghiệp Công nghệ cao & Thú y",
+                    match: 86,
+                    reason: "Áp dụng công nghệ sinh học và tự động hóa vào sản xuất nông nghiệp sạch bền vững.",
+                    careers: "Bác sĩ thú y, Quản lý trang trại công nghệ cao, Kỹ sư giống cây trồng.",
+                    keywords: ["nông nghiệp", "thú y", "lâm nghiệp", "thủy sản"]
+                }
+            ]
+        }
+    };
+
+    // State của AI Career Quiz
+    let careerCurrentStep = 0;
+    let careerAnswers = {
+        1: null,
+        2: [],
+        3: null,
+        4: null,
+        5: null,
+        6: {
+            score: "",
+            examType: "thpt",
+            combo: "",
+            region: "all"
+        }
+    };
+
+    function initCareerQuiz() {
+        if (!careerQuestionView) return;
+        renderCurrentCareerQuestion();
+
+        if (btnCareerNext && !btnCareerNext.dataset.bound) {
+            btnCareerNext.dataset.bound = "true";
+            btnCareerNext.addEventListener("click", handleCareerNext);
+        }
+        if (btnCareerPrev && !btnCareerPrev.dataset.bound) {
+            btnCareerPrev.dataset.bound = "true";
+            btnCareerPrev.addEventListener("click", handleCareerPrev);
+        }
+        if (btnCareerReset && !btnCareerReset.dataset.bound) {
+            btnCareerReset.dataset.bound = "true";
+            btnCareerReset.addEventListener("click", resetCareerQuiz);
+        }
+    }
+
+    function renderCurrentCareerQuestion() {
+        if (!careerQuestionView) return;
+        const total = RIASEC_QUESTIONS.length;
+        const q = RIASEC_QUESTIONS[careerCurrentStep];
+        if (!q) return;
+
+        // Cập nhật indicator & progress bar
+        if (careerStepIndicator) {
+            careerStepIndicator.textContent = `Câu hỏi ${careerCurrentStep + 1} / ${total}`;
+        }
+        if (careerProgressBar) {
+            const pct = Math.round(((careerCurrentStep + 1) / total) * 100);
+            careerProgressBar.style.width = `${pct}%`;
+        }
+
+        // Cập nhật nút Next / Submit
+        if (btnCareerPrev) {
+            btnCareerPrev.disabled = careerCurrentStep === 0;
+        }
+        if (btnCareerNext) {
+            if (careerCurrentStep === total - 1) {
+                if (careerNextText) careerNextText.textContent = "Xem Kết Quả Phân Tích AI";
+                if (careerNextIcon) careerNextIcon.className = "fa-solid fa-wand-magic-sparkles";
+            } else {
+                if (careerNextText) careerNextText.textContent = "Câu tiếp theo";
+                if (careerNextIcon) careerNextIcon.className = "fa-solid fa-arrow-right";
+            }
+        }
+
+        // Render nội dung câu hỏi
+        if (q.type === "profile") {
+            renderCareerProfileQuestion(q);
+        } else {
+            renderCareerChoiceQuestion(q);
+        }
+    }
+
+    function renderCareerChoiceQuestion(q) {
+        const selected = careerAnswers[q.id];
+        let optionsHtml = "";
+
+        q.options.forEach(opt => {
+            let isSelected = false;
+            if (q.type === "multi") {
+                isSelected = Array.isArray(selected) && selected.includes(opt.code);
+            } else {
+                isSelected = selected === opt.code;
+            }
+
+            const borderClass = isSelected
+                ? "border-amber-500 bg-amber-50/70 shadow-md ring-2 ring-amber-400/40"
+                : "border-slate-200 hover:border-amber-300 hover:bg-slate-50/80 bg-white";
+
+            const checkHtml = isSelected
+                ? `<div class="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs shadow-xs"><i class="fa-solid fa-check"></i></div>`
+                : `<div class="w-6 h-6 rounded-full border-2 border-slate-300 flex items-center justify-center"></div>`;
+
+            optionsHtml += `
+                <div class="career-option-card p-4 rounded-2xl border-2 ${borderClass} cursor-pointer transition-all flex items-start gap-3.5 select-none"
+                     data-qid="${q.id}" data-code="${opt.code}" data-multi="${q.type === 'multi'}">
+                    <div class="w-10 h-10 rounded-xl bg-${opt.color || 'amber'}-100 text-${opt.color || 'amber'}-700 flex items-center justify-center text-lg shrink-0 mt-0.5">
+                        <i class="fa-solid ${opt.icon}"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-2 mb-1">
+                            <h4 class="font-extrabold text-slate-800 text-sm sm:text-base">${escapeHtml(opt.title)}</h4>
+                            ${checkHtml}
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">${escapeHtml(opt.desc)}</p>
+                    </div>
+                </div>
+            `;
+        });
+
+        careerQuestionView.innerHTML = `
+            <div class="space-y-2 mb-4">
+                <h3 class="text-lg sm:text-xl font-extrabold text-slate-900 leading-snug">${escapeHtml(q.title)}</h3>
+                <p class="text-xs sm:text-sm text-slate-500">${escapeHtml(q.subtitle)}</p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                ${optionsHtml}
+            </div>
+        `;
+
+        // Gắn sự kiện click vào các thẻ option
+        careerQuestionView.querySelectorAll(".career-option-card").forEach(el => {
+            el.addEventListener("click", () => {
+                const qid = parseInt(el.dataset.qid);
+                const code = el.dataset.code;
+                const isMulti = el.dataset.multi === "true";
+
+                if (isMulti) {
+                    if (!Array.isArray(careerAnswers[qid])) careerAnswers[qid] = [];
+                    const idx = careerAnswers[qid].indexOf(code);
+                    if (idx > -1) {
+                        careerAnswers[qid].splice(idx, 1);
+                    } else {
+                        if (careerAnswers[qid].length < (q.maxSelect || 3)) {
+                            careerAnswers[qid].push(code);
+                        }
+                    }
+                } else {
+                    careerAnswers[qid] = code;
+                }
+                renderCurrentCareerQuestion();
+            });
+        });
+    }
+
+    function renderCareerProfileQuestion(q) {
+        const prof = careerAnswers[6] || {};
+        careerQuestionView.innerHTML = `
+            <div class="space-y-2 mb-4">
+                <h3 class="text-lg sm:text-xl font-extrabold text-slate-900 leading-snug">${escapeHtml(q.title)}</h3>
+                <p class="text-xs sm:text-sm text-slate-500">${escapeHtml(q.subtitle)}</p>
+            </div>
+            <div class="bg-gradient-to-br from-slate-50 to-amber-50/30 p-5 sm:p-6 rounded-2xl border border-amber-200/60 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Loại kỳ thi -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            🎯 1. Kỳ thi bạn sử dụng xét tuyển
+                        </label>
+                        <select id="career-input-exam" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 font-bold text-slate-800 text-sm focus:outline-none focus:border-amber-500 bg-white shadow-xs">
+                            <option value="thpt" ${prof.examType === 'thpt' ? 'selected' : ''}>Điểm thi tốt nghiệp THPT (thang 30)</option>
+                            <option value="tsa" ${prof.examType === 'tsa' ? 'selected' : ''}>Đánh giá tư duy Bách Khoa (TSA / K00, thang 100)</option>
+                            <option value="hsa" ${prof.examType === 'hsa' ? 'selected' : ''}>Đánh giá năng lực ĐHQG Hà Nội (HSA / Q00, thang 150)</option>
+                        </select>
+                    </div>
+
+                    <!-- Mức điểm -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            📊 2. Điểm thi đạt được / Dự kiến (thực tế)
+                        </label>
+                        <input type="number" step="0.05" id="career-input-score" value="${escapeHtml(prof.score || '')}"
+                               placeholder="Ví dụ: 24.5 (THPT) hoặc 72.0 (TSA)..."
+                               class="w-full py-2.5 px-3 rounded-xl border border-slate-300 font-extrabold text-slate-800 text-sm focus:outline-none focus:border-amber-500 bg-white shadow-xs">
+                    </div>
+
+                    <!-- Tổ hợp môn -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            📚 3. Tổ hợp môn sở trường (hoặc mã riêng)
+                        </label>
+                        <input type="text" id="career-input-combo" value="${escapeHtml(prof.combo || '')}"
+                               placeholder="Ví dụ: A00, A01, D01, B00, K00..."
+                               class="w-full py-2.5 px-3 rounded-xl border border-slate-300 font-bold text-slate-800 text-sm focus:outline-none focus:border-amber-500 bg-white shadow-xs uppercase">
+                    </div>
+
+                    <!-- Khu vực đào tạo -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            📍 4. Khu vực đại học ưu tiên
+                        </label>
+                        <select id="career-input-region" class="w-full py-2.5 px-3 rounded-xl border border-slate-300 font-bold text-slate-800 text-sm focus:outline-none focus:border-amber-500 bg-white shadow-xs">
+                            <option value="all" ${prof.region === 'all' ? 'selected' : ''}>Toàn quốc (Tất cả 299 trường)</option>
+                            <option value="hanoi" ${prof.region === 'hanoi' ? 'selected' : ''}>Hà Nội & Khu vực Miền Bắc</option>
+                            <option value="hcm" ${prof.region === 'hcm' ? 'selected' : ''}>TP. Hồ Chí Minh & Miền Nam</option>
+                            <option value="mientrung" ${prof.region === 'mientrung' ? 'selected' : ''}>Đà Nẵng & Khu vực Miền Trung</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="text-xs text-slate-500 italic flex items-center gap-2 pt-1">
+                    <i class="fa-solid fa-circle-info text-amber-500"></i>
+                    <span>Bạn có thể để trống nếu chỉ muốn xem gợi ý nhóm ngành nghề mà chưa cần đối chiếu điểm chuẩn trường đại học.</span>
+                </div>
+            </div>
+        `;
+
+        // Sync inputs back to state
+        const inputScore = document.getElementById("career-input-score");
+        const inputExam = document.getElementById("career-input-exam");
+        const inputCombo = document.getElementById("career-input-combo");
+        const inputRegion = document.getElementById("career-input-region");
+
+        if (inputScore) inputScore.addEventListener("input", e => careerAnswers[6].score = e.target.value.trim());
+        if (inputExam) inputExam.addEventListener("change", e => careerAnswers[6].examType = e.target.value);
+        if (inputCombo) inputCombo.addEventListener("input", e => careerAnswers[6].combo = e.target.value.trim().toUpperCase());
+        if (inputRegion) inputRegion.addEventListener("change", e => careerAnswers[6].region = e.target.value);
+    }
+
+    function handleCareerNext() {
+        const total = RIASEC_QUESTIONS.length;
+        // Kiểm tra câu hỏi hiện tại đã chọn chưa (ngoại trừ câu 6 là profile tùy chọn)
+        if (careerCurrentStep < total - 1) {
+            const currentQ = RIASEC_QUESTIONS[careerCurrentStep];
+            const ans = careerAnswers[currentQ.id];
+            if (currentQ.type === "multi") {
+                if (!Array.isArray(ans) || ans.length === 0) {
+                    alert("Vui lòng chọn ít nhất 1 phương án trước khi sang câu tiếp theo!");
+                    return;
+                }
+            } else {
+                if (!ans) {
+                    alert("Vui lòng chọn 1 phương án phù hợp nhất với bạn!");
+                    return;
+                }
+            }
+            careerCurrentStep++;
+            renderCurrentCareerQuestion();
+        } else {
+            // Hoàn thành trắc nghiệm -> Chạy thuật toán AI
+            runCareerAnalysis();
+        }
+    }
+
+    function handleCareerPrev() {
+        if (careerCurrentStep > 0) {
+            careerCurrentStep--;
+            renderCurrentCareerQuestion();
+        }
+    }
+
+    function resetCareerQuiz() {
+        careerCurrentStep = 0;
+        careerAnswers = {
+            1: null,
+            2: [],
+            3: null,
+            4: null,
+            5: null,
+            6: { score: "", examType: "thpt", combo: "", region: "all" }
+        };
+        if (careerQuizCard) careerQuizCard.classList.remove("hidden");
+        if (careerResultsCard) {
+            careerResultsCard.classList.add("hidden");
+            careerResultsCard.innerHTML = "";
+        }
+        renderCurrentCareerQuestion();
+    }
+
+    // Thuật toán tính điểm RIASEC
+    function computeRiasecScores() {
+        const scores = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+
+        // Q1: Hệ số x2 (Sở thích hoạt động chính)
+        if (careerAnswers[1]) scores[careerAnswers[1]] += 2.0;
+
+        // Q2: Môn học (mỗi môn được chọn +1.5)
+        if (Array.isArray(careerAnswers[2])) {
+            careerAnswers[2].forEach(code => scores[code] += 1.5);
+        }
+
+        // Q3: Môi trường làm việc (+1.5)
+        if (careerAnswers[3]) scores[careerAnswers[3]] += 1.5;
+
+        // Q4: Giải quyết vấn đề (+1.5)
+        if (careerAnswers[4]) scores[careerAnswers[4]] += 1.5;
+
+        // Q5: Giá trị nghề nghiệp cốt lõi (+2.0)
+        if (careerAnswers[5]) scores[careerAnswers[5]] += 2.0;
+
+        const totalPoints = Object.values(scores).reduce((a, b) => a + b, 0) || 1;
+        const percentages = {};
+        for (const k of Object.keys(scores)) {
+            percentages[k] = Math.round((scores[k] / totalPoints) * 100);
+        }
+
+        // Sắp xếp các nhóm theo điểm từ cao xuống thấp
+        const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+        const primaryCode = sorted[0][0];
+        const secondaryCode = sorted[1][0];
+        const hollandCode = `${primaryCode}${secondaryCode}`;
+
+        return {
+            scores,
+            percentages,
+            sorted,
+            primaryCode,
+            secondaryCode,
+            hollandCode
+        };
+    }
+
+    async function runCareerAnalysis() {
+        if (!careerResultsCard) return;
+        await loadStaticDataIfNeeded();
+
+        const riasec = computeRiasecScores();
+        let archetype = HOLLAND_ARCHETYPES[riasec.hollandCode] ||
+                        HOLLAND_ARCHETYPES[`${riasec.secondaryCode}${riasec.primaryCode}`] ||
+                        HOLLAND_ARCHETYPES["IR"]; // Fallback chuẩn
+
+        const profileInput = careerAnswers[6] || {};
+        const userScore = profileInput.score ? parseFloat(profileInput.score) : null;
+        const examType = profileInput.examType || "thpt";
+        const targetRegion = profileInput.region || "all";
+
+        // Tìm kiếm các trường đại học thực tế trong staticScoresData
+        const matchedSchoolsByMajor = matchUniversitiesForMajors(archetype.majors, userScore, examType, targetRegion);
+
+        // Render toàn bộ giao diện kết quả
+        renderCareerResultsUI(riasec, archetype, matchedSchoolsByMajor, userScore, examType);
+
+        if (careerQuizCard) careerQuizCard.classList.add("hidden");
+        careerResultsCard.classList.remove("hidden");
+        careerResultsCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function matchUniversitiesForMajors(recommendedMajors, userScore, examType, targetRegion) {
+        if (!staticScoresData || !Array.isArray(staticScoresData)) return [];
+
+        const results = [];
+
+        recommendedMajors.forEach(majorGroup => {
+            const groupKeywords = majorGroup.keywords.map(k => k.toLowerCase());
+            const matchedUniversities = [];
+
+            staticScoresData.forEach(item => {
+                const mName = (item.major_name || "").toLowerCase();
+                const uName = (item.university_name || "").toLowerCase();
+                const uCode = (item.university_code || "").toUpperCase();
+
+                // 1. Kiểm tra từ khóa tên ngành
+                const isMatchMajor = groupKeywords.some(kw => mName.includes(kw));
+                if (!isMatchMajor) return;
+
+                // 2. Lọc khu vực
+                if (targetRegion === "hanoi") {
+                    const isNorth = ["hà nội", "bách khoa hà nội", "quốc gia hà nội", "hải phòng", "thái nguyên", "nam định"].some(k => uName.includes(k)) ||
+                                    ["BKA", "KHA", "NTH", "SPH", "YHB", "GTA", "TMU", "HTC", "NHH"].includes(uCode);
+                    if (!isNorth) return;
+                } else if (targetRegion === "hcm") {
+                    const isSouth = ["hồ chí minh", "tp.hcm", "sài gòn", "cần thơ", "bình dương", "đồng nai"].some(k => uName.includes(k)) ||
+                                    ["QSB", "QST", "UEH", "SG", "IUH", "DKC", "NTS"].includes(uCode);
+                    if (!isSouth) return;
+                } else if (targetRegion === "mientrung") {
+                    const isCentral = ["đà nẵng", "huế", "quy nhơn", "quảng nam", "quảng ngãi", "nha trang", "khánh hòa", "vinh"].some(k => uName.includes(k)) ||
+                                      ["DDA", "DDU", "TDN", "HHA"].includes(uCode);
+                    if (!isCentral) return;
+                }
+
+                // 3. Tìm điểm chuẩn theo kỳ thi tương ứng
+                let cutoff = null;
+                let cutoffText = "";
+                let methodUsed = "";
+                let subjectGroup = "";
+
+                (item.methods || []).forEach(m => {
+                    const mMethod = m.method || "";
+                    if (examType === "tsa" && (mMethod.includes("TSA") || mMethod.includes("tư duy"))) {
+                        if (cutoff === null || m.cutoff_score > cutoff) {
+                            cutoff = m.cutoff_score;
+                            cutoffText = m.cutoff_score_text;
+                            methodUsed = mMethod;
+                            subjectGroup = m.subject_group;
+                        }
+                    } else if (examType === "hsa" && (mMethod.includes("HSA") || (mMethod.includes("ĐGNL") && mMethod.includes("Hà Nội")))) {
+                        if (cutoff === null || m.cutoff_score > cutoff) {
+                            cutoff = m.cutoff_score;
+                            cutoffText = m.cutoff_score_text;
+                            methodUsed = mMethod;
+                            subjectGroup = m.subject_group;
+                        }
+                    } else if (examType === "thpt") {
+                        if (mMethod.includes("THPT") || mMethod.includes("100") || (m.cutoff_score !== null && m.cutoff_score <= 30.5 && m.cutoff_score >= 10.0)) {
+                            if (cutoff === null || (m.cutoff_score !== null && m.cutoff_score > cutoff)) {
+                                cutoff = m.cutoff_score;
+                                cutoffText = m.cutoff_score_text;
+                                methodUsed = mMethod || "Điểm thi tốt nghiệp THPT";
+                                subjectGroup = m.subject_group;
+                            }
+                        }
+                    }
+                });
+
+                if (cutoff !== null && cutoff > 0) {
+                    let chance = "info"; // default
+                    let diff = null;
+                    if (userScore !== null) {
+                        diff = Math.round((userScore - cutoff) * 100) / 100;
+                        if (diff >= -0.5 && diff <= 1.5) {
+                            chance = "target"; // Vừa sức
+                        } else if (diff < -0.5 && diff >= -2.5) {
+                            chance = "reach"; // Mơ ước / Thách thức
+                        } else if (diff > 1.5) {
+                            chance = "safety"; // An toàn
+                        } else {
+                            chance = "hard"; // Khó
+                        }
+                    }
+
+                    matchedUniversities.push({
+                        university_code: item.university_code,
+                        university_name: item.university_name,
+                        major_name: item.major_name,
+                        major_code: item.major_code,
+                        year: item.year,
+                        cutoff_score: cutoff,
+                        cutoff_score_text: cutoffText,
+                        method: methodUsed,
+                        subject_group: subjectGroup,
+                        diff: diff,
+                        chance: chance
+                    });
+                }
+            });
+
+            // Sắp xếp các trường: Ưu tiên trường vừa sức -> an toàn -> mơ ước
+            matchedUniversities.sort((a, b) => {
+                if (userScore !== null) {
+                    const weight = { "target": 1, "safety": 2, "reach": 3, "hard": 4, "info": 5 };
+                    if (weight[a.chance] !== weight[b.chance]) {
+                        return weight[a.chance] - weight[b.chance];
+                    }
+                }
+                return b.cutoff_score - a.cutoff_score;
+            });
+
+            results.push({
+                group: majorGroup,
+                universities: matchedUniversities.slice(0, 8) // Lấy top 8 trường tiêu biểu
+            });
+        });
+
+        return results;
+    }
+
+    function renderCareerResultsUI(riasec, archetype, matchedSchoolsByMajor, userScore, examType) {
+        const { percentages, hollandCode, primaryCode, secondaryCode } = riasec;
+
+        const dimNames = {
+            "R": "Realistic (Thực tế - Kỹ thuật)",
+            "I": "Investigative (Nghiên cứu - Logic)",
+            "A": "Artistic (Nghệ thuật - Sáng tạo)",
+            "S": "Social (Xã hội - Giúp đỡ)",
+            "E": "Enterprising (Kinh doanh - Quản lý)",
+            "C": "Conventional (Quy củ - Nghiệp vụ)"
+        };
+
+        const dimColors = {
+            "R": "bg-amber-500",
+            "I": "bg-blue-600",
+            "A": "bg-rose-500",
+            "S": "bg-emerald-500",
+            "E": "bg-indigo-600",
+            "C": "bg-slate-600"
+        };
+
+        // Render RIASEC Bars
+        let barsHtml = "";
+        for (const [dim, name] of Object.entries(dimNames)) {
+            const pct = percentages[dim] || 0;
+            const barBg = dimColors[dim];
+            const isHighlight = dim === primaryCode || dim === secondaryCode;
+            const borderHighlight = isHighlight ? "font-extrabold text-slate-900" : "font-medium text-slate-600";
+
+            barsHtml += `
+                <div class="space-y-1">
+                    <div class="flex items-center justify-between text-xs ${borderHighlight}">
+                        <span>${name}</span>
+                        <span class="font-extrabold">${pct}%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                        <div class="${barBg} h-2.5 rounded-full transition-all duration-700" style="width: ${pct}%;"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render Strengths
+        let strengthsHtml = "";
+        archetype.strengths.forEach(s => {
+            strengthsHtml += `
+                <li class="flex items-start gap-2.5 text-xs sm:text-sm text-slate-700">
+                    <i class="fa-solid fa-circle-check text-emerald-500 mt-1 shrink-0"></i>
+                    <span>${escapeHtml(s)}</span>
+                </li>
+            `;
+        });
+
+        // Render Major Cards & University Benchmark Recommendations
+        let majorBlocksHtml = "";
+        matchedSchoolsByMajor.forEach((item, idx) => {
+            const group = item.group;
+            const unis = item.universities;
+
+            let uniCardsHtml = "";
+            if (unis.length === 0) {
+                uniCardsHtml = `
+                    <div class="col-span-full py-4 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                        Chưa tìm thấy trường nào có mức điểm phù hợp với bộ lọc khu vực này trong CSDL.
+                    </div>
+                `;
+            } else {
+                unis.forEach(u => {
+                    let badgeHtml = "";
+                    if (u.chance === "target") {
+                        badgeHtml = `<span class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">🎯 Vừa sức (+${u.diff}đ)</span>`;
+                    } else if (u.chance === "reach") {
+                        badgeHtml = `<span class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200">🌟 Mơ ước (${u.diff}đ)</span>`;
+                    } else if (u.chance === "safety") {
+                        badgeHtml = `<span class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">🛡️ An toàn (+${u.diff}đ)</span>`;
+                    } else {
+                        badgeHtml = `<span class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-slate-100 text-slate-700 border border-slate-200">Điểm chuẩn: ${u.cutoff_score_text}</span>`;
+                    }
+
+                    uniCardsHtml += `
+                        <div class="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-amber-400 hover:shadow-md transition-all flex flex-col justify-between gap-2.5">
+                            <div>
+                                <div class="flex items-center justify-between gap-1 mb-1">
+                                    <span class="font-bold text-xs text-blue-700 bg-blue-50 px-2 py-0.5 rounded">${escapeHtml(u.university_code)}</span>
+                                    ${badgeHtml}
+                                </div>
+                                <h5 class="font-extrabold text-sm text-slate-800 line-clamp-1" title="${escapeHtml(u.university_name)}">${escapeHtml(u.university_name)}</h5>
+                                <div class="text-xs text-slate-600 line-clamp-1 mt-0.5">${escapeHtml(u.major_name)}</div>
+                            </div>
+                            <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                                <span class="font-extrabold text-slate-900">Điểm: <span class="text-amber-600">${u.cutoff_score_text}</span></span>
+                                <button onclick="window.jumpToUniversityBenchmark('${escapeHtml(u.university_code)}', '${escapeHtml(u.major_name)}', '${examType}')"
+                                        class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-blue-600 hover:text-white font-bold text-[11px] text-slate-700 transition-all flex items-center gap-1">
+                                    <span>Tra cứu</span>
+                                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            majorBlocksHtml += `
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 sm:p-6 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center font-extrabold text-sm shadow-xs">
+                                #${idx + 1}
+                            </div>
+                            <div>
+                                <h4 class="text-base sm:text-lg font-extrabold text-slate-900">${escapeHtml(group.name)}</h4>
+                                <p class="text-xs text-slate-500">${escapeHtml(group.reason)}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-extrabold text-xs">
+                                <i class="fa-solid fa-fire text-amber-500"></i> ${group.match}% Phù Hợp
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="text-xs text-slate-600 flex items-center gap-2">
+                        <i class="fa-solid fa-briefcase text-slate-400"></i>
+                        <span><strong>Vị trí tiêu biểu:</strong> ${escapeHtml(group.careers)}</span>
+                    </div>
+
+                    <!-- Danh sách các trường đào tạo phù hợp -->
+                    <div class="space-y-2 pt-2">
+                        <div class="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            <span>Top trường đào tạo trong CSDL (${unis.length} trường gợi ý):</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                            ${uniCardsHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        careerResultsCard.innerHTML = `
+            <!-- BANNER TỔNG QUAN HOLLAND CODE -->
+            <div class="bg-gradient-to-br from-amber-500 via-orange-500 to-rose-600 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="space-y-3 max-w-2xl text-center md:text-left">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold text-yellow-100">
+                        <i class="fa-solid fa-certificate"></i> Mã Tính Cách Holland Của Bạn: <span class="font-extrabold text-white text-sm">${hollandCode}</span>
+                    </div>
+                    <h3 class="text-2xl sm:text-3xl font-extrabold tracking-tight">${escapeHtml(archetype.title)}</h3>
+                    <p class="text-xs sm:text-sm text-orange-100 leading-relaxed">${escapeHtml(archetype.subtitle)}</p>
+                </div>
+                <div class="shrink-0 flex flex-col sm:flex-row gap-3">
+                    <button onclick="window.printCareerReport()"
+                            class="px-4 py-2.5 rounded-xl bg-white text-orange-700 font-bold text-xs sm:text-sm shadow-md hover:bg-orange-50 flex items-center justify-center gap-2 transition-all">
+                        <i class="fa-solid fa-print"></i> In / Xuất Báo Cáo
+                    </button>
+                    <button onclick="window.resetCareerQuizFromUI()"
+                            class="px-4 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold text-xs sm:text-sm border border-white/20 flex items-center justify-center gap-2 transition-all">
+                        <i class="fa-solid fa-rotate-left"></i> Làm Lại Trắc Nghiệm
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2 CỘT: BIỂU ĐỒ RIASEC & PHÂN TÍCH CHUYÊN SÂU -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Cột 1: Biểu đồ RIASEC -->
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4">
+                    <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+                        <i class="fa-solid fa-chart-pie text-amber-500 text-lg"></i>
+                        <h4 class="font-extrabold text-slate-800 text-base">Phân Bổ Thiên Hướng RIASEC</h4>
+                    </div>
+                    <div class="space-y-3">
+                        ${barsHtml}
+                    </div>
+                    <p class="text-[11px] text-slate-400 italic pt-2 border-t border-slate-100">
+                        * Điểm số càng cao phản ánh mức độ quan tâm và năng lượng bạn sẵn sàng đầu tư cho nhóm nghề nghiệp đó.
+                    </p>
+                </div>
+
+                <!-- Cột 2: Điểm mạnh cốt lõi & Môi trường lý tưởng -->
+                <div class="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-5">
+                    <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+                        <i class="fa-solid fa-lightbulb text-amber-500 text-lg"></i>
+                        <h4 class="font-extrabold text-slate-800 text-base">Chân Dung Năng Lực & Phong Cách Làm Việc</h4>
+                    </div>
+                    <div>
+                        <h5 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Thế mạnh cá nhân nổi trội:</h5>
+                        <ul class="space-y-2">
+                            ${strengthsHtml}
+                        </ul>
+                    </div>
+                    <div class="pt-2 border-t border-slate-100">
+                        <h5 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Môi trường làm việc thăng hoa:</h5>
+                        <p class="text-xs sm:text-sm text-slate-700 bg-amber-50/50 p-3 rounded-xl border border-amber-200/50 flex items-start gap-2.5">
+                            <i class="fa-solid fa-building text-amber-600 mt-0.5 shrink-0"></i>
+                            <span>${escapeHtml(archetype.environment)}</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KHU VỰC TOP NGÀNH HỌC & TRƯỜNG ĐẠI HỌC TƯƠNG THÍCH -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <div class="flex items-center gap-2 text-sm font-extrabold text-slate-800">
+                        <i class="fa-solid fa-graduation-cap text-amber-500"></i>
+                        <span>Top Nhóm Ngành Học & Trường Đại Học Đề Xuất Cho Bạn:</span>
+                    </div>
+                    ${userScore !== null ? `<span class="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg">Điểm của bạn: ${userScore} (${examType.toUpperCase()})</span>` : ''}
+                </div>
+                <div class="space-y-5">
+                    ${majorBlocksHtml}
+                </div>
+            </div>
+        `;
+    }
+
+    // Tiện ích chuyển tab và tìm kiếm nhanh khi bấm từ kết quả hướng nghiệp
+    window.jumpToUniversityBenchmark = function(uniCode, majorName, examType) {
+        if (examType === "tsa" || examType === "hsa") {
+            setActiveTab("others");
+            if (selectOtherUniversity) {
+                selectOtherUniversity.value = uniCode;
+            }
+            if (selectOtherMethodType) {
+                selectOtherMethodType.value = examType;
+            }
+            handleOthersAnalysis();
+            const el = document.getElementById("others-schools-container");
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        } else {
+            setActiveTab("thpt");
+            if (selectThptUniversity) {
+                selectThptUniversity.value = uniCode;
+            }
+            if (filterThptKeyword) {
+                filterThptKeyword.value = majorName.split(" ")[0] || "";
+            }
+            handleThptAnalysis();
+            const el = document.getElementById("thpt-schools-container");
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    };
+
+    window.resetCareerQuizFromUI = function() {
+        resetCareerQuiz();
+    };
+
+    window.printCareerReport = function() {
+        window.print();
+    };
+
     function escapeHtml(text) {
         if (!text) return "";
-        return text
+        return String(text)
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
